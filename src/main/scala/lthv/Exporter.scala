@@ -18,7 +18,6 @@ import org.mongodb.scala.MongoClient
 import org.mongodb.scala.MongoClientSettings
 import org.mongodb.scala.MongoCredential
 import org.mongodb.scala.ServerAddress
-import org.mongodb.scala.bson.BsonDocument
 import org.mongodb.scala.connection.ClusterSettings
 
 import scala.concurrent.Await
@@ -52,9 +51,9 @@ object Exporter extends App {
   val db = client.getDatabase(getStringProperty("repli.exporter.target.db"))
   val collection = db.getCollection(getStringProperty("repli.exporter.target.collection"))
 
-  val source: Source[BsonDocument, NotUsed] = MongoSource(collection.find())
+  val source: Source[Document, NotUsed] = MongoSource(collection.find())
 
-  val parsingFlow: Flow[BsonDocument, String, NotUsed] = Flow[BsonDocument]
+  val parsingFlow: Flow[Document, String, NotUsed] = Flow[Document]
     .mapAsyncUnordered(getIntProperty("repli.exporter.parallelism")) {
       document =>
         Future {
