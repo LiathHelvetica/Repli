@@ -14,6 +14,7 @@ import lthv.utils.ConfigHelpers.getStringProperty
 import reactivemongo.akkastream.State
 import reactivemongo.akkastream.cursorProducer
 import reactivemongo.api.AsyncDriver
+import reactivemongo.api.Cursor
 import reactivemongo.api.MongoConnection
 import reactivemongo.api.MongoConnectionOptions
 import reactivemongo.api.MongoConnectionOptions.Credential
@@ -34,7 +35,9 @@ object ReactiveExporter extends App {
 
   val driver = AsyncDriver()
   val uri = MongoConnection.fromString(getStringProperty("repli.exporter.target.uri"))
-  val connection = uri.flatMap(u => driver.connect(u))
+  val connection = uri.flatMap(u => driver.connect(u))*/
+
+
   /*val connection = driver.connect(
     List(getStringProperty("repli.exporter.target.host")),
     MongoConnectionOptions(
@@ -48,12 +51,14 @@ object ReactiveExporter extends App {
       )
     )
   )*/
-  val db = connection.flatMap(c => c.database(getStringProperty("repli.exporter.target.db")))
+
+
+  /*val db = connection.flatMap(c => c.database(getStringProperty("repli.exporter.target.db")))
   val collectionFuture: Future[BSONCollection] = db.map(db => db.collection[BSONCollection](getStringProperty("repli.exporter.target.collection")))
 
   val collection = Await.result(collectionFuture, Duration.Inf)
 
-  val source: Source[BSONDocument, Future[State]] = collection.find(BSONDocument()).cursor[BSONDocument]().documentSource()
+  val source: Source[BSONDocument, Future[State]] = collection.find(BSONDocument()).cursor[BSONDocument]().documentSource(100, Cursor.FailOnError())
 
   val parsingFlow: Flow[BSONDocument, String, NotUsed] = Flow[BSONDocument]
     .mapAsyncUnordered(getIntProperty("repli.exporter.parallelism")) {

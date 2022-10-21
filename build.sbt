@@ -13,4 +13,7 @@ libraryDependencies ++= Seq(
   "com.typesafe" % "config" % "1.4.2",
   "ch.qos.logback" % "logback-classic" % "1.2.10",
   "com.typesafe.scala-logging" %% "scala-logging" % "3.9.4",
+  // "org.reactivemongo" %% "reactivemongo" % "1.0.10",
+  // "org.reactivemongo" %% "reactivemongo-akkastream" % "1.0.10",
+  // "org.reactivemongo" % "reactivemongo-shaded-native" % "1.0.10-linux-x86-64" % "runtime"
 )
