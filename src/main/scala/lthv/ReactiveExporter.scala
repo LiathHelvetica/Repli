@@ -30,7 +30,7 @@ import scala.util.Success*/
 
 object ReactiveExporter extends App {
 
-  /*implicit val conf: Config = ConfigFactory.load("default")
+  /*implicit val conf: Config = ConfigFactory.load("export")
   implicit val actorSystem: ActorSystem = ActorSystem()
 
   val driver = AsyncDriver()
