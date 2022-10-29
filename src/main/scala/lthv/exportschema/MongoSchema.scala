@@ -24,6 +24,7 @@ import org.mongodb.scala.bson.BsonSymbol
 import org.mongodb.scala.bson.BsonTimestamp
 import org.mongodb.scala.bson.BsonUndefined
 import org.mongodb.scala.bson.BsonValue
+import org.mongodb.scala.Document
 import play.api.libs.json.JsArray
 import play.api.libs.json.JsBoolean
 import play.api.libs.json.JsNull
@@ -95,7 +96,7 @@ object DbPointerSchema extends Schema[BsonDbPointer] {
   }
 }
 
-object DocumentSchema extends RootSchema[BsonDocument] {
+object BsonDocumentSchema extends RootSchema[BsonDocument] {
   val tag: Option[String] = Some(BsonType.DOCUMENT.name)
 
   def encode(document: BsonDocument)(implicit conf: Config): JsValue = {
@@ -104,6 +105,18 @@ object DocumentSchema extends RootSchema[BsonDocument] {
 
   override def getId(b: BsonDocument)(implicit conf: Config): ExportId = {
     ExportId(b)
+  }
+}
+
+object DocumentSchema extends RootSchema[Document] {
+  val tag: Option[String] = Some(BsonType.DOCUMENT.name)
+
+  def encode(document: Document)(implicit conf: Config): JsValue = {
+    BsonDocumentSchema.encode(document.toBsonDocument)
+  }
+
+  override def getId(d: Document)(implicit conf: Config): ExportId = {
+    BsonDocumentSchema.getId(d.toBsonDocument)
   }
 }
 
@@ -243,7 +256,7 @@ object MongoSchema extends Schema[BsonValue] {
       case b: BsonBoolean => BooleanSchema.encode(b)
       case d: BsonDateTime => DateTimeSchema.encode(d)
       case d: BsonDbPointer => DbPointerSchema.encode(d)
-      case d: BsonDocument => DocumentSchema.encode(d)
+      case d: BsonDocument => BsonDocumentSchema.encode(d)
       case j: BsonJavaScript => JavaScriptSchema.encode(j)
       case j: BsonJavaScriptWithScope => ScopedJavaScriptSchema.encode(j)
       case m: BsonMaxKey => MaxKeySchema.encode(m)
