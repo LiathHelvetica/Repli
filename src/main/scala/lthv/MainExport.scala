@@ -3,7 +3,7 @@ package lthv
 import akka.actor.ActorSystem
 import com.typesafe.config.Config
 import com.typesafe.config.ConfigFactory
-import lthv.exporter.FromMongoToKafkaExport
+import lthv.exporter.FromMongoToKafkaExporter
 import lthv.utils.ConfigHelpers.getCharArrayProperty
 import lthv.utils.ConfigHelpers.getIntPropertyWithFallback
 import lthv.utils.ConfigHelpers.getStringProperty
@@ -42,13 +42,11 @@ object MainExport extends App {
       .build()
   )
 
-  val exporter = FromMongoToKafkaExport(
+  val exporter = FromMongoToKafkaExporter(
     client,
     getStringProperty("repli.exporter.target.db"),
     getStringProperty("repli.exporter.target.collection")
   )
-
-  println(exporter.from)
 
   Await.ready(
     exporter.graph.run,

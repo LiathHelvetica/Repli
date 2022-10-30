@@ -1,9 +1,9 @@
-package lthv.exporter
+package lthv.exporter.middleman
 
 import akka.NotUsed
 import akka.stream.scaladsl.Flow
 import com.typesafe.config.Config
-import lthv.schema.RootSchema
+import lthv.schema.RootRepliSchema
 import lthv.utils.ConfigHelpers.getIntPropertyWithFallback
 import lthv.utils.ConfigHelpers.getStringProperty
 import lthv.utils.ConfigHelpers.getStringPropertyWithFallback
@@ -15,7 +15,7 @@ import scala.concurrent.Future
 
 trait ToKafkaMiddleman[IN] extends ExportMiddleman[IN, ProducerRecord[Array[Byte], Array[Byte]]] {
 
-  val middlemanHelper: RootSchema[IN]
+  val middlemanHelper: RootRepliSchema[IN]
   implicit val ex: ExecutionContext
   implicit val conf: Config
 

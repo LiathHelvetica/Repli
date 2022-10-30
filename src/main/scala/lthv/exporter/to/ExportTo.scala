@@ -1,4 +1,4 @@
-package lthv.exporter
+package lthv.exporter.to
 
 import akka.stream.scaladsl.Sink
 

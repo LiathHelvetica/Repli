@@ -1,4 +1,4 @@
-package lthv.exporter
+package lthv.exporter.from
 
 import akka.NotUsed
 import akka.stream.scaladsl.Source

@@ -1,4 +1,4 @@
-package lthv.exporter
+package lthv.exporter.middleman
 
 import akka.NotUsed
 import akka.stream.scaladsl.Flow

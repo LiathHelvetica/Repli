@@ -6,7 +6,7 @@ import play.api.libs.json.JsObject
 import play.api.libs.json.JsString
 import play.api.libs.json.JsValue
 
-trait Schema[B] {
+trait RepliSchema[B] {
   val tag: Option[String]
 
   protected def toTaggedSchema(v: JsValue, detailFields: JsObject = JsObject.empty)(implicit conf: Config): JsObject = {
@@ -19,6 +19,6 @@ trait Schema[B] {
   def encode(b: B)(implicit conf: Config): JsValue
 }
 
-trait RootSchema[B] extends Schema[B] {
+trait RootRepliSchema[B] extends RepliSchema[B] {
   def getId(b: B)(implicit conf: Config): ExportId
 }
