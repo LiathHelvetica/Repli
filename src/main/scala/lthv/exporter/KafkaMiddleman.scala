@@ -2,7 +2,7 @@ package lthv.exporter
 
 import akka.NotUsed
 import akka.stream.scaladsl.Flow
-import lthv.exportschema.RootSchema
+import lthv.schema.RootSchema
 import lthv.utils.ConfigHelpers.getIntPropertyWithFallback
 import lthv.utils.ConfigHelpers.getStringProperty
 import lthv.utils.ConfigHelpers.getStringPropertyWithFallback

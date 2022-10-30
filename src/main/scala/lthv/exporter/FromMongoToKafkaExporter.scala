@@ -1,8 +1,8 @@
 package lthv.exporter
 
 import com.typesafe.config.Config
-import lthv.exportschema.DocumentSchema
-import lthv.exportschema.RootSchema
+import lthv.schema.DocumentSchema
+import lthv.schema.RootSchema
 import org.mongodb.scala.MongoClient
 import org.mongodb.scala.MongoCollection
 import org.mongodb.scala.MongoDatabase

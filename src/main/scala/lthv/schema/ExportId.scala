@@ -1,4 +1,4 @@
-package lthv.exportschema
+package lthv.schema
 
 import com.typesafe.config.Config
 import lthv.utils.ConfigHelpers.getStringPropertyWithFallback
