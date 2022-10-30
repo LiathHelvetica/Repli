@@ -2,6 +2,7 @@ package lthv.exporter
 
 import akka.NotUsed
 import akka.stream.scaladsl.Flow
+import com.typesafe.config.Config
 import lthv.schema.RootSchema
 import lthv.utils.ConfigHelpers.getIntPropertyWithFallback
 import lthv.utils.ConfigHelpers.getStringProperty
@@ -12,12 +13,13 @@ import play.api.libs.json.Json
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
-trait KafkaMiddleman extends ToKafkaExporter {
+trait ToKafkaMiddleman[IN] extends ExportMiddleman[IN, ProducerRecord[Array[Byte], Array[Byte]]] {
 
   val middlemanHelper: RootSchema[IN]
   implicit val ex: ExecutionContext
+  implicit val conf: Config
 
-  val flow: Flow[IN, OUT, NotUsed] = Flow[IN]
+  val flow: Flow[IN, ProducerRecord[Array[Byte], Array[Byte]], NotUsed] = Flow[IN]
     .mapAsyncUnordered(getIntPropertyWithFallback("repli.exporter.parallelism")) {
       inRecord =>
         Future {

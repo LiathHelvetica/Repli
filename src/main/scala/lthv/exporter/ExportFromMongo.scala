@@ -6,10 +6,7 @@ import akka.stream.scaladsl.Source
 import org.mongodb.scala.Document
 import org.mongodb.scala.MongoCollection
 
-trait FromMongoExporter extends Exporter {
+case class ExportFromMongo(collection: MongoCollection[Document]) extends ExportFrom[Document] {
 
-  override type IN = Document
-  val collection: MongoCollection[IN]
-
-  val source: Source[IN, NotUsed] = MongoSource(collection.find())
+  val source: Source[Document, NotUsed] = MongoSource(collection.find())
 }
