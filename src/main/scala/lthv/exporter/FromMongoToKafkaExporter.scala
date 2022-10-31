@@ -1,6 +1,7 @@
 package lthv.exporter
 
 import akka.Done
+import akka.kafka.ProducerSettings
 import com.typesafe.config.Config
 import lthv.exporter.to.ExportToKafka.getKafkaSettings
 import lthv.exporter.from.ExportFrom
@@ -21,13 +22,14 @@ import scala.concurrent.Future
 
 case class FromMongoToKafkaExporter(
   collection: MongoCollection[Document],
+  kafkaSettings: ProducerSettings[Array[Byte], Array[Byte]],
   topic: String
 )(implicit conf: Config, ex: ExecutionContext)
   extends Exporter[Document, ProducerRecord[Array[Byte], Array[Byte]], Future[Done]] {
 
   override val from: ExportFrom[Document] = ExportFromMongo(collection)
   override val middleman: ExportMiddleman[Document, ProducerRecord[Array[Byte], Array[Byte]]] = FromMongoToKafkaMiddleman(topic)
-  override val to: ExportTo[ProducerRecord[Array[Byte], Array[Byte]], Future[Done]] = ExportToKafka(getKafkaSettings)
+  override val to: ExportTo[ProducerRecord[Array[Byte], Array[Byte]], Future[Done]] = ExportToKafka(kafkaSettings)
 }
 
 object FromMongoToKafkaExporter {
@@ -36,12 +38,17 @@ object FromMongoToKafkaExporter {
     client: MongoClient,
     requestedDatabase: String,
     requestedCollection: String,
-    kafkaTopicStrategy: KafkaTopicStrategy
+    kafkaTopicStrategy: KafkaTopicStrategy,
+    kafkaSettings: ProducerSettings[Array[Byte], Array[Byte]]
   )(implicit conf: Config, ex: ExecutionContext): FromMongoToKafkaExporter = {
 
     val db: MongoDatabase = client.getDatabase(requestedDatabase)
     val collection: MongoCollection[Document] = db.getCollection(requestedCollection)
 
-    new FromMongoToKafkaExporter(collection, kafkaTopicStrategy.getTopicName(requestedDatabase, requestedCollection))
+    new FromMongoToKafkaExporter(
+      collection,
+      kafkaSettings,
+      kafkaTopicStrategy.getTopicName(requestedDatabase, requestedCollection)
+    )
   }
 }

@@ -1,14 +1,18 @@
 package lthv
 
 import akka.actor.ActorSystem
+import akka.kafka.ProducerSettings
 import com.typesafe.config.Config
 import com.typesafe.config.ConfigFactory
 import lthv.exporter.FromMongoToKafkaExporter
 import lthv.utils.ConfigHelpers.getCharArrayProperty
+import lthv.utils.ConfigHelpers.getConfig
 import lthv.utils.ConfigHelpers.getKafkaTopicStrategyWithFallback
 import lthv.utils.ConfigHelpers.getStringProperty
 import lthv.utils.ConfigHelpers.getStringPropertyWithFallback
 import lthv.utils.ConfigHelpers.getUrlSeqProperty
+import org.apache.kafka.clients.producer.Producer
+import org.apache.kafka.common.serialization.ByteArraySerializer
 import org.mongodb.scala.MongoClient
 import org.mongodb.scala.MongoClientSettings
 import org.mongodb.scala.MongoCredential
@@ -28,6 +32,16 @@ object MainExport extends App {
 
   implicit val conf: Config = ConfigFactory.load("export")
   implicit val actorSystem: ActorSystem = ActorSystem()
+
+  val kafkaSettingsTry: Try[(ProducerSettings[Array[Byte], Array[Byte]], Producer[Array[Byte], Array[Byte]])] = Try {
+    val kafkaSettings = ProducerSettings(
+      getConfig("repli.exporter.kafka.producer"),
+      new ByteArraySerializer,
+      new ByteArraySerializer
+    )
+    val producer = kafkaSettings.createKafkaProducer
+    (kafkaSettings.withProducer(producer), producer)
+  }
 
   val credentialsTry: Try[MongoCredential] = Try {
     MongoCredential.createCredential(
@@ -56,17 +70,19 @@ object MainExport extends App {
 
   val exportersTry: Try[Seq[FromMongoToKafkaExporter]] = for {
     client <- clientTry
-    kafkaTopicStrategy <- getKafkaTopicStrategyWithFallback("repli.exporter.destination.kafka.topic.strategy")
     collections <- getUrlSeqProperty(
       "repli.exporter.target.collections",
       (s1, s2) => (s1, s2)
     )
+    kafkaTopicStrategy <- getKafkaTopicStrategyWithFallback("repli.exporter.destination.kafka.topic.strategy")
+    kafkaSettings <- kafkaSettingsTry
   } yield {
     collections.map(s => FromMongoToKafkaExporter(
       client,
       s._1,
       s._2,
-      kafkaTopicStrategy
+      kafkaTopicStrategy,
+      kafkaSettings._1
     ))
   }
 
@@ -86,6 +102,7 @@ object MainExport extends App {
   }
 
   clientTry.map(client => client.close)
+  kafkaSettingsTry.map(s => s._2.close())
   Await.result(
     actorSystem.terminate,
     Duration.Inf
