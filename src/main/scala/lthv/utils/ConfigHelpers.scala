@@ -8,10 +8,10 @@ import scala.jdk.CollectionConverters._
 import scala.util.Failure
 import scala.util.Try
 import cats.implicits._
+import lthv.enums.EnumKafkaTopicStrategy
 import lthv.kafka.FromCollectionName
 import lthv.kafka.FromDbAndCollectionName
 import lthv.kafka.KafkaTopicStrategy
-import lthv.utils.enums.EnumKafkaTopicStrategy
 import lthv.utils.exception.EnumPropertyException
 
 import scala.util.Success

@@ -1,4 +1,4 @@
-package lthv.utils.enums
+package lthv.enums
 
 object EnumKafkaTopicStrategy extends Enumeration {
   type KafkaTopicStrategy = Value
