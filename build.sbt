@@ -15,7 +15,8 @@ libraryDependencies ++= Seq(
   "ch.qos.logback" % "logback-classic" % "1.2.10",
   "com.typesafe.scala-logging" %% "scala-logging" % "3.9.4",
   "com.typesafe.play" %% "play-json" % "2.9.3",
-  "joda-time" % "joda-time" % "2.12.0"
+  "joda-time" % "joda-time" % "2.12.0",
+  "org.typelevel" %% "cats-core" % "2.8.0"
   // "org.reactivemongo" %% "reactivemongo" % "1.0.10",
   // "org.reactivemongo" %% "reactivemongo-akkastream" % "1.0.10",
   // "org.reactivemongo" % "reactivemongo-shaded-native" % "1.0.10-linux-x86-64" % "runtime"

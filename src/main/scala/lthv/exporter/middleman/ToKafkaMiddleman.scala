@@ -16,6 +16,7 @@ import scala.concurrent.Future
 trait ToKafkaMiddleman[IN] extends ExportMiddleman[IN, ProducerRecord[Array[Byte], Array[Byte]]] {
 
   val middlemanHelper: RootRepliSchema[IN]
+  val topic: String
   implicit val ex: ExecutionContext
   implicit val conf: Config
 
@@ -26,7 +27,7 @@ trait ToKafkaMiddleman[IN] extends ExportMiddleman[IN, ProducerRecord[Array[Byte
           val id = middlemanHelper.getId(inRecord)
           val message = Json.toBytes(middlemanHelper.encode(inRecord))
           val record = new ProducerRecord(
-            getStringProperty("repli.exporter.destination.kafka.topic"),
+            topic,
             id.id,
             message
           )

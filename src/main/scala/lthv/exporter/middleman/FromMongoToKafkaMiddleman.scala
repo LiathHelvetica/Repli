@@ -7,7 +7,7 @@ import org.mongodb.scala.Document
 
 import scala.concurrent.ExecutionContext
 
-case class FromMongoToKafkaMiddleman()(implicit val conf: Config, val ex: ExecutionContext) extends ToKafkaMiddleman[Document] {
+case class FromMongoToKafkaMiddleman(topic: String)(implicit val conf: Config, val ex: ExecutionContext) extends ToKafkaMiddleman[Document] {
 
   override val middlemanHelper: RootRepliSchema[Document] = DocumentSchema
 }

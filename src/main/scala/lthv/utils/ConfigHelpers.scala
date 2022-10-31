@@ -2,6 +2,19 @@ package lthv.utils
 
 import com.typesafe.config.Config
 import com.typesafe.config.ConfigFactory
+import lthv.utils.exception.ImproperConfigException
+
+import scala.jdk.CollectionConverters._
+import scala.util.Failure
+import scala.util.Try
+import cats.implicits._
+import lthv.kafka.FromCollectionName
+import lthv.kafka.FromDbAndCollectionName
+import lthv.kafka.KafkaTopicStrategy
+import lthv.utils.enums.EnumKafkaTopicStrategy
+import lthv.utils.exception.EnumPropertyException
+
+import scala.util.Success
 
 object ConfigHelpers {
 
@@ -29,5 +42,35 @@ object ConfigHelpers {
 
   def getConfig(path: String)(implicit conf: Config): Config = {
     conf.getConfig(path)
+  }
+
+  def getStringSeqProperty(path: String)(implicit conf: Config): Seq[String] = {
+    conf.getStringList(path).asScala.toSeq
+  }
+
+  def getUrlSeqProperty[OUT](path: String, transform: (String, String) => OUT)(implicit config: Config): Try[Seq[OUT]] = {
+    getStringSeqProperty(path).map(s => {
+      val parts = s.split(":").toSeq
+      if (parts.size != 2) {
+        Failure(ImproperConfigException(path, s))
+      } else {
+        Try {
+          transform(parts.head, parts.last)
+        }.recoverWith { case _ => Failure(ImproperConfigException(path, s)) }
+      }
+    }).sequence
+  }
+
+  def getKafkaTopicStrategyWithFallback(path: String)(implicit conf: Config): Try[KafkaTopicStrategy] = {
+    val e = getStringPropertyWithFallback(path)
+    Try {
+      EnumKafkaTopicStrategy.withName(e)
+    } match {
+      case Success(v) => Success(v match {
+        case EnumKafkaTopicStrategy.FromCollectionName => FromCollectionName
+        case EnumKafkaTopicStrategy.FromDbAndCollectionName => FromDbAndCollectionName
+      })
+      case Failure(_) => Failure(EnumPropertyException(path, e, EnumKafkaTopicStrategy.values.map(v => v.toString)))
+    }
   }
 }
