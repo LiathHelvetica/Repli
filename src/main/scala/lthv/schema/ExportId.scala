@@ -32,7 +32,7 @@ object ExportId {
 
     val idValue = bson.get(mongoIdKey)
     val idTag = idValue.getBsonType.name
-    val charset = getStringPropertyWithFallback("repli.exporter.schema.exportIdCharset")
+    val charset = getStringPropertyWithFallback("repli.schema.exportIdCharset")
 
     new ExportId(
       idValue match {
@@ -43,14 +43,14 @@ object ExportId {
         case d: BsonDocument => d.toString.getBytes(charset)
         case j: BsonJavaScript => j.getCode.getBytes(charset)
         case j: BsonJavaScriptWithScope => j.getCode.getBytes(charset)
-        case _: BsonMaxKey => getStringPropertyWithFallback("repli.exporter.schema.maxKeyValue").getBytes(charset)
-        case _: BsonMinKey => getStringPropertyWithFallback("repli.exporter.schema.minKeyValue").getBytes(charset)
+        case _: BsonMaxKey => getStringPropertyWithFallback("repli.schema.maxKeyValue").getBytes(charset)
+        case _: BsonMinKey => getStringPropertyWithFallback("repli.schema.minKeyValue").getBytes(charset)
         case _: BsonNull => nullString.getBytes(charset)
         case n: BsonNumber => n.doubleValue.toString.getBytes(charset)
         case i: BsonObjectId => i.getValue.toString.getBytes(charset)
         case r: BsonRegularExpression => JsObject(Seq(
-          getStringPropertyWithFallback("repli.exporter.schema.regExPatternKey") -> JsString(r.getPattern),
-          getStringPropertyWithFallback("repli.exporter.schema.regExOptionsKey") -> JsString(r.getOptions)
+          getStringPropertyWithFallback("repli.schema.regExPatternKey") -> JsString(r.getPattern),
+          getStringPropertyWithFallback("repli.schema.regExOptionsKey") -> JsString(r.getOptions)
         )).toString.getBytes(charset)
         case s: BsonString => s.getValue.getBytes(charset)
         case s: BsonSymbol => s.getSymbol.getBytes(charset)

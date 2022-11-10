@@ -11,8 +11,8 @@ trait RepliSchema[B] {
 
   protected def toTaggedSchema(v: JsValue, detailFields: JsObject = JsObject.empty)(implicit conf: Config): JsObject = {
     JsObject(Seq(
-      getStringPropertyWithFallback("repli.exporter.schema.valueKey") -> v
-    ) ++ tag.map(s => getStringPropertyWithFallback("repli.exporter.schema.typeKey") -> JsString(s))
+      getStringPropertyWithFallback("repli.schema.valueKey") -> v
+    ) ++ tag.map(s => getStringPropertyWithFallback("repli.schema.typeKey") -> JsString(s))
     ) ++ detailFields
   }
 

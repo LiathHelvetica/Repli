@@ -32,8 +32,8 @@ trait ToKafkaMiddleman[IN] extends ExportMiddleman[IN, ProducerRecord[Array[Byte
             message
           )
           record.headers().add(
-            getStringPropertyWithFallback("repli.exporter.schema.idTypeKey"),
-            id.tag.getBytes(getStringPropertyWithFallback("repli.exporter.schema.exportIdCharset"))
+            getStringPropertyWithFallback("repli.schema.idTypeKey"),
+            id.tag.getBytes(getStringPropertyWithFallback("repli.schema.exportIdCharset"))
           )
           record
         }

@@ -51,7 +51,7 @@ object BinarySchema extends RepliSchema[BsonBinary] {
     toTaggedSchema(
       JsString(b.getData),
       JsObject(Seq(
-        getStringPropertyWithFallback("repli.exporter.schema.subtypeKey") -> JsNumber(b.getType.toInt)
+        getStringPropertyWithFallback("repli.schema.subtypeKey") -> JsNumber(b.getType.toInt)
       ))
     )
   }
@@ -72,12 +72,12 @@ object DateTimeSchema extends RepliSchema[BsonDateTime] {
 
   def encode(d: BsonDateTime)(implicit conf: Config): JsValue = {
 
-    val format = getStringPropertyWithFallback("repli.exporter.schema.dateTimeFormat")
+    val format = getStringPropertyWithFallback("repli.schema.dateTimeFormat")
 
     toTaggedSchema(
       JsString(forPattern(format).print(d.getValue)),
       JsObject(Seq(
-        getStringPropertyWithFallback("repli.exporter.schema.subtypeKey") -> JsString(format)
+        getStringPropertyWithFallback("repli.schema.subtypeKey") -> JsString(format)
       ))
     )
   }
@@ -90,7 +90,7 @@ object DbPointerSchema extends RepliSchema[BsonDbPointer] {
     toTaggedSchema(
       JsString(ptr.getId.toString),
       JsObject(Seq(
-        getStringPropertyWithFallback("repli.exporter.schema.dbPointerNamespaceKey") -> JsString(ptr.getNamespace)
+        getStringPropertyWithFallback("repli.schema.dbPointerNamespaceKey") -> JsString(ptr.getNamespace)
       ))
     )
   }
@@ -145,7 +145,7 @@ object MaxKeySchema extends RepliSchema[BsonMaxKey] {
 
   def encode(mk: BsonMaxKey)(implicit conf: Config): JsValue = {
     toTaggedSchema(
-      JsString(getStringPropertyWithFallback("repli.exporter.schema.maxKeyValue"))
+      JsString(getStringPropertyWithFallback("repli.schema.maxKeyValue"))
     )
   }
 }
@@ -155,7 +155,7 @@ object MinKeySchema extends RepliSchema[BsonMinKey] {
 
   def encode(mk: BsonMinKey)(implicit conf: Config): JsValue = {
     toTaggedSchema(
-      JsString(getStringPropertyWithFallback("repli.exporter.schema.minKeyValue"))
+      JsString(getStringPropertyWithFallback("repli.schema.minKeyValue"))
     )
   }
 }
@@ -195,7 +195,7 @@ object RegExSchema extends RepliSchema[BsonRegularExpression] {
     toTaggedSchema(
       JsString(reg.getPattern),
       JsObject(Seq(
-        getStringPropertyWithFallback("repli.exporter.schema.regExOptionsKey") -> JsString(reg.getOptions)
+        getStringPropertyWithFallback("repli.schema.regExOptionsKey") -> JsString(reg.getOptions)
       ))
     )
   }
