@@ -73,4 +73,10 @@ object ConfigHelpers {
       case Failure(_) => Failure(EnumPropertyException(path, e, EnumKafkaTopicStrategy.values.map(v => v.toString)))
     }
   }
+
+  def getTopicName(implicit conf: Config): String = {
+    val prefix = getStringPropertyWithFallback("repli.importer.source.kafka.topic.prefix")
+    val topic = getStringProperty("repli.importer.source.kafka.topic")
+    prefix + topic
+  }
 }
