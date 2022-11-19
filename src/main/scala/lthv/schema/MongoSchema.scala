@@ -226,7 +226,10 @@ object TimestampSchema extends RepliSchema[BsonTimestamp] {
 
   def encode(t: BsonTimestamp)(implicit conf: Config): JsValue = {
     toTaggedSchema(
-      JsNumber(t.getValue)
+      JsNumber(t.getTime),
+      JsObject(Seq(
+        getStringPropertyWithFallback("repli.schema.timestampValueKey") -> JsNumber(t.getValue)
+      ))
     )
   }
 }
