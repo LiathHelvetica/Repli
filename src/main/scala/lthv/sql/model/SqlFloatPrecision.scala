@@ -1,3 +1,7 @@
 package lthv.sql.model
 
-case class SqlFloatPrecision(beforeSeparatorPrecision: Int, afterSeparatorPrecision: Int)
+trait SqlFloatPrecision
+
+case class SqlDigitDefinedFloatPrecision(beforeSeparatorPrecision: Int, afterSeparatorPrecision: Int) extends SqlFloatPrecision
+
+case class SqlBytesDefinedFloatPrecision(precision: Int) extends SqlFloatPrecision

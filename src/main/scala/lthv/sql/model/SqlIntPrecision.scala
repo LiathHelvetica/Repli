@@ -1,3 +1,7 @@
 package lthv.sql.model
 
-case class SqlIntPrecision(precision: Int)
+trait SqlIntPrecision
+
+case class SqlDigitDefinedIntPrecision(precision: Int) extends SqlIntPrecision
+
+case class SqlBytesDefinedIntPrecision(precision: Int) extends SqlIntPrecision

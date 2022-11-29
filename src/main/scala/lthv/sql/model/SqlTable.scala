@@ -1,3 +1,22 @@
 package lthv.sql.model
 
-case class SqlTable(name: String, columns: Map[String, SqlType], constraints: Set[SqlConstraint])
+import lthv.utils.Converters.SqlRawString
+import scalikejdbc.interpolation.SQLSyntax
+
+case class SqlTable(
+  name: String,
+  // they do not contain idColumn and parentIdColumn
+  columns: Seq[SqlColumn],
+  constraints: Set[SqlConstraint],
+  idColumn: SqlColumn,
+  parentIdColumn: Option[SqlColumn]
+) {
+
+  def columnNames: Seq[String] = {
+    Seq(idColumn.name) ++ parentIdColumn.toSeq.names ++ columns.names
+  }
+
+  def columnNamesAsSyntax: SQLSyntax = {
+    columnNames.mkString(", ").rawSql
+  }
+}

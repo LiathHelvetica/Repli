@@ -13,12 +13,19 @@ import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
 import com.typesafe.config.Config
 import com.typesafe.config.ConfigFactory
+import lthv.utils.ConfigHelpers.getBooleanPropertyWithFallback
 import lthv.utils.ConfigHelpers.getConfig
 import lthv.utils.ConfigHelpers.getIntPropertyWithFallback
+import lthv.utils.ConfigHelpers.getStringProperty
+import lthv.utils.ConfigHelpers.getStringPropertyWithFallback
 import lthv.utils.ConfigHelpers.getTopicName
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.common.serialization.ByteArrayDeserializer
 import play.api.libs.json.Json
+import scalikejdbc.ConnectionPool
+import scalikejdbc.ConnectionPoolSettings
+import scalikejdbc.GlobalSettings
+import scalikejdbc.LoggingSQLAndTimeSettings
 
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext
@@ -36,6 +43,25 @@ object MainImport extends App {
     new ByteArrayDeserializer
   )
 
+  GlobalSettings.loggingSQLAndTime = LoggingSQLAndTimeSettings(
+    printUnprocessedStackTrace = getBooleanPropertyWithFallback("repli.importer.target.scalike.logging.printUnprocessedStackTrace"),
+    warningEnabled = getBooleanPropertyWithFallback("repli.importer.target.scalike.logging.warningEnabled"),
+    singleLineMode = getBooleanPropertyWithFallback("repli.importer.target.scalike.logging.singleLineMode")
+  )
+
+  val connectionPoolName = getStringPropertyWithFallback("repli.importer.target.poolName")
+
+  val dbSettings = ConnectionPoolSettings(
+    validationQuery = getStringPropertyWithFallback("repli.importer.target.validationQuery")
+  )
+  ConnectionPool.add(
+    connectionPoolName,
+    getStringProperty("repli.importer.target.url"),
+    getStringProperty("repli.importer.target.user"),
+    getStringProperty("repli.importer.target.password"),
+    dbSettings
+  )
+
   // can subscribe to multiple topics but in case of single Import unit should be one
   val topic = Subscriptions.topics(getTopicName)
 
@@ -45,7 +71,7 @@ object MainImport extends App {
     .mapAsyncUnordered(getIntPropertyWithFallback("repli.importer.parallelism"))(inRecord => Future {
       val key = inRecord.key
       val value = Json.parse(inRecord.value)
-
+      // to rows
       "asd"
     })
 

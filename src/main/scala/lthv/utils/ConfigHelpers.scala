@@ -36,6 +36,14 @@ object ConfigHelpers {
     if (conf.hasPath(path)) conf.getInt(path) else defaultConf.getInt(path)
   }
 
+  def getBooleanProperty(path: String)(implicit conf: Config): Boolean = {
+    conf.getBoolean(path)
+  }
+
+  def getBooleanPropertyWithFallback(path: String)(implicit conf: Config): Boolean = {
+    if (conf.hasPath(path)) conf.getBoolean(path) else defaultConf.getBoolean(path)
+  }
+
   def getCharArrayProperty(path: String)(implicit conf: Config): Array[Char] = {
     getStringProperty(path).toCharArray
   }

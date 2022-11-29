@@ -4,6 +4,8 @@ trait SqlType {
 
 }
 
+object SqlNullType extends SqlType
+
 // unlimited text
 object SqlTextType extends SqlType
 
