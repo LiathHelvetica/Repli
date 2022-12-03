@@ -3,6 +3,7 @@ package lthv.schema.encode
 import com.typesafe.config.Config
 import lthv.utils.ConfigHelpers.getStringPropertyWithFallback
 import lthv.utils.Converters.toBase64
+import lthv.utils.StaticConfig.mongoIdKey
 import org.bson.BsonDbPointer
 import org.bson.BsonType
 import org.joda.time.format.DateTimeFormat.forPattern
@@ -109,7 +110,11 @@ object DocumentSchema extends RepliSchemaWithId[Document] {
   val tag: Option[String] = Some(BsonType.DOCUMENT.name)
 
   def encode(document: Document)(implicit conf: Config): JsValue = {
-    BsonDocumentSchema.encode(document.toBsonDocument)
+
+    val d = document.toBsonDocument
+    d.remove(mongoIdKey)
+
+    BsonDocumentSchema.encode(d)
   }
 
   override def getId(d: Document)(implicit conf: Config): ExportId = {
