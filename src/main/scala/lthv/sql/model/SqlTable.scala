@@ -7,7 +7,7 @@ case class SqlTable(
   name: String,
   // they do not contain idColumn and parentIdColumn
   columns: Seq[SqlColumn],
-  constraints: Set[SqlConstraint],
+  constraints: Seq[SqlConstraint],
   idColumn: SqlColumn,
   parentIdColumn: Option[SqlColumn]
 ) {
