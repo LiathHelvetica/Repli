@@ -1,4 +1,4 @@
-package lthv.schema
+package lthv.schema.encode
 
 import com.typesafe.config.Config
 import lthv.utils.ConfigHelpers.getStringPropertyWithFallback
@@ -24,17 +24,15 @@ import org.mongodb.scala.bson.BsonUndefined
 import play.api.libs.json.JsObject
 import play.api.libs.json.JsString
 
-case class ExportId(id: Array[Byte], tag: String)
+object MongoExportIdProvider extends ExportIdProvider[BsonDocument] {
 
-object ExportId {
-
-  def apply(bson: BsonDocument)(implicit conf: Config): ExportId = {
+  def getIdFrom(bson: BsonDocument)(implicit conf: Config): ExportId = {
 
     val idValue = bson.get(mongoIdKey)
     val idTag = idValue.getBsonType.name
     val charset = getStringPropertyWithFallback("repli.schema.exportIdCharset")
 
-    new ExportId(
+    ExportId(
       idValue match {
         case b: BsonBinary => b.getData
         case b: BsonBoolean => b.getValue.toString.getBytes(charset)

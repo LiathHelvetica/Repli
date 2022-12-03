@@ -1,4 +1,4 @@
-package lthv.schema
+package lthv.schema.encode
 
 import com.typesafe.config.Config
 import lthv.utils.ConfigHelpers.getStringPropertyWithFallback
@@ -19,6 +19,14 @@ trait RepliSchema[B] {
   def encode(b: B)(implicit conf: Config): JsValue
 }
 
-trait RootRepliSchema[B] extends RepliSchema[B] {
+trait RepliSchemaWithId[B] extends RepliSchema[B] {
   def getId(b: B)(implicit conf: Config): ExportId
+}
+
+trait RootRepliSchema[B] extends RepliSchemaWithId[B] {
+  val exportIdProvider: ExportIdProvider[B]
+
+  override def getId(b: B)(implicit conf: Config): ExportId = {
+    exportIdProvider.getIdFrom(b)
+  }
 }

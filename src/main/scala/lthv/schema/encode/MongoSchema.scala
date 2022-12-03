@@ -1,11 +1,12 @@
-package lthv.schema
+package lthv.schema.encode
 
 import com.typesafe.config.Config
-import lthv.utils.Converters.toBase64
 import lthv.utils.ConfigHelpers.getStringPropertyWithFallback
+import lthv.utils.Converters.toBase64
 import org.bson.BsonDbPointer
 import org.bson.BsonType
 import org.joda.time.format.DateTimeFormat.forPattern
+import org.mongodb.scala.Document
 import org.mongodb.scala.bson.BsonArray
 import org.mongodb.scala.bson.BsonBinary
 import org.mongodb.scala.bson.BsonBoolean
@@ -24,7 +25,6 @@ import org.mongodb.scala.bson.BsonSymbol
 import org.mongodb.scala.bson.BsonTimestamp
 import org.mongodb.scala.bson.BsonUndefined
 import org.mongodb.scala.bson.BsonValue
-import org.mongodb.scala.Document
 import play.api.libs.json.JsArray
 import play.api.libs.json.JsBoolean
 import play.api.libs.json.JsNull
@@ -98,17 +98,14 @@ object DbPointerSchema extends RepliSchema[BsonDbPointer] {
 
 object BsonDocumentSchema extends RootRepliSchema[BsonDocument] {
   val tag: Option[String] = Some(BsonType.DOCUMENT.name)
+  val exportIdProvider: ExportIdProvider[BsonDocument] = MongoExportIdProvider
 
   def encode(document: BsonDocument)(implicit conf: Config): JsValue = {
     document.entrySet().asScala.foldLeft(JsObject.empty)((json, entry) => json ++ MongoSchema.encode(entry))
   }
-
-  override def getId(b: BsonDocument)(implicit conf: Config): ExportId = {
-    ExportId(b)
-  }
 }
 
-object DocumentSchema extends RootRepliSchema[Document] {
+object DocumentSchema extends RepliSchemaWithId[Document] {
   val tag: Option[String] = Some(BsonType.DOCUMENT.name)
 
   def encode(document: Document)(implicit conf: Config): JsValue = {
