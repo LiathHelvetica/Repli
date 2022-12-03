@@ -24,7 +24,7 @@ trait RepliSchemaWithIdEncoder[B] extends RepliSchemaEncoder[B] {
 }
 
 trait RootRepliSchemaEncoder[B] extends RepliSchemaWithIdEncoder[B] {
-  val exportIdProvider: ExportIdProvider[B]
+  val exportIdProvider: ExportIdEncoder[B]
 
   override def getId(b: B)(implicit conf: Config): ExportId = {
     exportIdProvider.getIdFrom(b)

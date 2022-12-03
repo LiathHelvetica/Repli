@@ -24,7 +24,7 @@ import org.mongodb.scala.bson.BsonUndefined
 import play.api.libs.json.JsObject
 import play.api.libs.json.JsString
 
-object MongoExportIdProvider extends ExportIdProvider[BsonDocument] {
+object MongoExportIdEncoder extends ExportIdEncoder[BsonDocument] {
 
   def getIdFrom(bson: BsonDocument)(implicit conf: Config): ExportId = {
 

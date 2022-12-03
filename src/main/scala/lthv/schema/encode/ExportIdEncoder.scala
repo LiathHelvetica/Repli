@@ -4,6 +4,6 @@ import com.typesafe.config.Config
 
 case class ExportId(id: Array[Byte], tag: String)
 
-trait ExportIdProvider[T] {
+trait ExportIdEncoder[T] {
   def getIdFrom(t: T)(implicit conf: Config): ExportId
 }

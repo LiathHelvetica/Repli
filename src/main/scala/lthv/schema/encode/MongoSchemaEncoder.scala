@@ -99,7 +99,7 @@ object DbPointerSchemaEncoder extends RepliSchemaEncoder[BsonDbPointer] {
 
 object BsonDocumentSchemaEncoder extends RootRepliSchemaEncoder[BsonDocument] {
   val tag: Option[String] = Some(BsonType.DOCUMENT.name)
-  val exportIdProvider: ExportIdProvider[BsonDocument] = MongoExportIdProvider
+  val exportIdProvider: ExportIdEncoder[BsonDocument] = MongoExportIdEncoder
 
   def encode(document: BsonDocument)(implicit conf: Config): JsValue = {
     document.entrySet().asScala.foldLeft(JsObject.empty)((json, entry) => json ++ MongoSchemaEncoder.encode(entry))
