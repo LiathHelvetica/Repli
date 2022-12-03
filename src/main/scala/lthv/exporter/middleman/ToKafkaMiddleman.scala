@@ -3,7 +3,7 @@ package lthv.exporter.middleman
 import akka.NotUsed
 import akka.stream.scaladsl.Flow
 import com.typesafe.config.Config
-import lthv.schema.encode.RepliSchemaWithId
+import lthv.schema.encode.RepliSchemaWithIdEncoder
 import lthv.utils.ConfigHelpers.getIntPropertyWithFallback
 import lthv.utils.ConfigHelpers.getStringProperty
 import lthv.utils.ConfigHelpers.getStringPropertyWithFallback
@@ -15,7 +15,7 @@ import scala.concurrent.Future
 
 trait ToKafkaMiddleman[IN] extends ExportMiddleman[IN, ProducerRecord[Array[Byte], Array[Byte]]] {
 
-  val middlemanHelper: RepliSchemaWithId[IN]
+  val middlemanHelper: RepliSchemaWithIdEncoder[IN]
   val topic: String
   implicit val ex: ExecutionContext
   implicit val conf: Config

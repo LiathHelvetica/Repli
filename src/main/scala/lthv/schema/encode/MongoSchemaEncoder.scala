@@ -37,15 +37,15 @@ import play.api.libs.json.JsValue
 import java.util.Map.Entry
 import scala.jdk.CollectionConverters._
 
-object ArraySchema extends RepliSchema[BsonArray] {
+object ArraySchemaEncoder extends RepliSchemaEncoder[BsonArray] {
   val tag: Option[String] = Some(BsonType.ARRAY.name)
 
   def encode(b: BsonArray)(implicit conf: Config): JsValue = {
-    JsArray(b.getValues.asScala.map(b => MongoSchema.encode(b)))
+    JsArray(b.getValues.asScala.map(b => MongoSchemaEncoder.encode(b)))
   }
 }
 
-object BinarySchema extends RepliSchema[BsonBinary] {
+object BinarySchemaEncoder extends RepliSchemaEncoder[BsonBinary] {
   val tag: Option[String] = Some(BsonType.BINARY.name)
 
   def encode(b: BsonBinary)(implicit conf: Config): JsValue = {
@@ -58,7 +58,7 @@ object BinarySchema extends RepliSchema[BsonBinary] {
   }
 }
 
-object BooleanSchema extends RepliSchema[BsonBoolean] {
+object BooleanSchemaEncoder extends RepliSchemaEncoder[BsonBoolean] {
   val tag: Option[String] = Some(BsonType.BOOLEAN.name)
 
   def encode(b: BsonBoolean)(implicit conf: Config): JsValue = {
@@ -68,7 +68,7 @@ object BooleanSchema extends RepliSchema[BsonBoolean] {
   }
 }
 
-object DateTimeSchema extends RepliSchema[BsonDateTime] {
+object DateTimeSchemaEncoder extends RepliSchemaEncoder[BsonDateTime] {
   val tag: Option[String] = Some(BsonType.DATE_TIME.name)
 
   def encode(d: BsonDateTime)(implicit conf: Config): JsValue = {
@@ -84,7 +84,7 @@ object DateTimeSchema extends RepliSchema[BsonDateTime] {
   }
 }
 
-object DbPointerSchema extends RepliSchema[BsonDbPointer] {
+object DbPointerSchemaEncoder extends RepliSchemaEncoder[BsonDbPointer] {
   val tag: Option[String] = Some(BsonType.DB_POINTER.name)
 
   def encode(ptr: BsonDbPointer)(implicit conf: Config): JsValue = {
@@ -97,16 +97,16 @@ object DbPointerSchema extends RepliSchema[BsonDbPointer] {
   }
 }
 
-object BsonDocumentSchema extends RootRepliSchema[BsonDocument] {
+object BsonDocumentSchemaEncoder extends RootRepliSchemaEncoder[BsonDocument] {
   val tag: Option[String] = Some(BsonType.DOCUMENT.name)
   val exportIdProvider: ExportIdProvider[BsonDocument] = MongoExportIdProvider
 
   def encode(document: BsonDocument)(implicit conf: Config): JsValue = {
-    document.entrySet().asScala.foldLeft(JsObject.empty)((json, entry) => json ++ MongoSchema.encode(entry))
+    document.entrySet().asScala.foldLeft(JsObject.empty)((json, entry) => json ++ MongoSchemaEncoder.encode(entry))
   }
 }
 
-object DocumentSchema extends RepliSchemaWithId[Document] {
+object DocumentSchemaEncoder extends RepliSchemaWithIdEncoder[Document] {
   val tag: Option[String] = Some(BsonType.DOCUMENT.name)
 
   def encode(document: Document)(implicit conf: Config): JsValue = {
@@ -114,15 +114,15 @@ object DocumentSchema extends RepliSchemaWithId[Document] {
     val d = document.toBsonDocument
     d.remove(mongoIdKey)
 
-    BsonDocumentSchema.encode(d)
+    BsonDocumentSchemaEncoder.encode(d)
   }
 
   override def getId(d: Document)(implicit conf: Config): ExportId = {
-    BsonDocumentSchema.getId(d.toBsonDocument)
+    BsonDocumentSchemaEncoder.getId(d.toBsonDocument)
   }
 }
 
-object JavaScriptSchema extends RepliSchema[BsonJavaScript] {
+object JavaScriptSchemaEncoder extends RepliSchemaEncoder[BsonJavaScript] {
   val tag: Option[String] = Some(BsonType.JAVASCRIPT.name)
 
   def encode(js: BsonJavaScript)(implicit conf: Config): JsValue = {
@@ -132,7 +132,7 @@ object JavaScriptSchema extends RepliSchema[BsonJavaScript] {
   }
 }
 
-object ScopedJavaScriptSchema extends RepliSchema[BsonJavaScriptWithScope] {
+object ScopedJavaScriptSchemaEncoder extends RepliSchemaEncoder[BsonJavaScriptWithScope] {
   val tag: Option[String] = Some(BsonType.JAVASCRIPT_WITH_SCOPE.name)
 
   def encode(js: BsonJavaScriptWithScope)(implicit conf: Config): JsValue = {
@@ -142,7 +142,7 @@ object ScopedJavaScriptSchema extends RepliSchema[BsonJavaScriptWithScope] {
   }
 }
 
-object MaxKeySchema extends RepliSchema[BsonMaxKey] {
+object MaxKeySchemaEncoder extends RepliSchemaEncoder[BsonMaxKey] {
   val tag: Option[String] = Some(BsonType.MAX_KEY.name)
 
   def encode(mk: BsonMaxKey)(implicit conf: Config): JsValue = {
@@ -152,7 +152,7 @@ object MaxKeySchema extends RepliSchema[BsonMaxKey] {
   }
 }
 
-object MinKeySchema extends RepliSchema[BsonMinKey] {
+object MinKeySchemaEncoder extends RepliSchemaEncoder[BsonMinKey] {
   val tag: Option[String] = Some(BsonType.MIN_KEY.name)
 
   def encode(mk: BsonMinKey)(implicit conf: Config): JsValue = {
@@ -162,7 +162,7 @@ object MinKeySchema extends RepliSchema[BsonMinKey] {
   }
 }
 
-object NullSchema extends RepliSchema[BsonNull] {
+object NullSchemaEncoder extends RepliSchemaEncoder[BsonNull] {
   val tag: Option[String] = Some(BsonType.NULL.name)
 
   def encode(n: BsonNull)(implicit conf: Config): JsValue = {
@@ -170,7 +170,7 @@ object NullSchema extends RepliSchema[BsonNull] {
   }
 }
 
-object NumberSchema extends RepliSchema[BsonNumber] {
+object NumberSchemaEncoder extends RepliSchemaEncoder[BsonNumber] {
   val tag: Option[String] = Some(BsonType.DOUBLE.name)
 
   def encode(n: BsonNumber)(implicit conf: Config): JsValue = {
@@ -180,7 +180,7 @@ object NumberSchema extends RepliSchema[BsonNumber] {
   }
 }
 
-object IdSchema extends RepliSchema[BsonObjectId] {
+object IdSchemaEncoder extends RepliSchemaEncoder[BsonObjectId] {
   val tag: Option[String] = Some(BsonType.OBJECT_ID.name)
 
   def encode(id: BsonObjectId)(implicit conf: Config): JsValue = {
@@ -190,7 +190,7 @@ object IdSchema extends RepliSchema[BsonObjectId] {
   }
 }
 
-object RegExSchema extends RepliSchema[BsonRegularExpression] {
+object RegExSchemaEncoder extends RepliSchemaEncoder[BsonRegularExpression] {
   val tag: Option[String] = Some(BsonType.REGULAR_EXPRESSION.name)
 
   def encode(reg: BsonRegularExpression)(implicit conf: Config): JsValue = {
@@ -203,7 +203,7 @@ object RegExSchema extends RepliSchema[BsonRegularExpression] {
   }
 }
 
-object StringSchema extends RepliSchema[BsonString] {
+object StringSchemaEncoder extends RepliSchemaEncoder[BsonString] {
   val tag: Option[String] = Some(BsonType.STRING.name)
 
   def encode(s: BsonString)(implicit conf: Config): JsValue = {
@@ -213,7 +213,7 @@ object StringSchema extends RepliSchema[BsonString] {
   }
 }
 
-object SymbolSchema extends RepliSchema[BsonSymbol] {
+object SymbolSchemaEncoder extends RepliSchemaEncoder[BsonSymbol] {
   val tag: Option[String] = Some(BsonType.SYMBOL.name)
 
   def encode(s: BsonSymbol)(implicit conf: Config): JsValue = {
@@ -223,7 +223,7 @@ object SymbolSchema extends RepliSchema[BsonSymbol] {
   }
 }
 
-object TimestampSchema extends RepliSchema[BsonTimestamp] {
+object TimestampSchemaEncoder extends RepliSchemaEncoder[BsonTimestamp] {
   val tag: Option[String] = Some(BsonType.TIMESTAMP.name)
 
   def encode(t: BsonTimestamp)(implicit conf: Config): JsValue = {
@@ -236,7 +236,7 @@ object TimestampSchema extends RepliSchema[BsonTimestamp] {
   }
 }
 
-object UndefinedSchema extends RepliSchema[BsonUndefined] {
+object UndefinedSchemaEncoder extends RepliSchemaEncoder[BsonUndefined] {
   val tag: Option[String] = Some(BsonType.UNDEFINED.name)
 
   def encode(u: BsonUndefined)(implicit conf: Config): JsValue = {
@@ -244,7 +244,7 @@ object UndefinedSchema extends RepliSchema[BsonUndefined] {
   }
 }
 
-object MongoSchema extends RepliSchema[BsonValue] {
+object MongoSchemaEncoder extends RepliSchemaEncoder[BsonValue] {
 
   val tag: Option[String] = None
 
@@ -256,24 +256,24 @@ object MongoSchema extends RepliSchema[BsonValue] {
 
   override def encode(b: BsonValue)(implicit conf: Config): JsValue = {
     b match {
-      case a: BsonArray => ArraySchema.encode(a)
-      case b: BsonBinary => BinarySchema.encode(b)
-      case b: BsonBoolean => BooleanSchema.encode(b)
-      case d: BsonDateTime => DateTimeSchema.encode(d)
-      case d: BsonDbPointer => DbPointerSchema.encode(d)
-      case d: BsonDocument => BsonDocumentSchema.encode(d)
-      case j: BsonJavaScript => JavaScriptSchema.encode(j)
-      case j: BsonJavaScriptWithScope => ScopedJavaScriptSchema.encode(j)
-      case m: BsonMaxKey => MaxKeySchema.encode(m)
-      case m: BsonMinKey => MinKeySchema.encode(m)
-      case n: BsonNull => NullSchema.encode(n)
-      case n: BsonNumber => NumberSchema.encode(n)
-      case i: BsonObjectId => IdSchema.encode(i)
-      case r: BsonRegularExpression => RegExSchema.encode(r)
-      case s: BsonString => StringSchema.encode(s)
-      case s: BsonSymbol => SymbolSchema.encode(s)
-      case t: BsonTimestamp => TimestampSchema.encode(t)
-      case u: BsonUndefined => UndefinedSchema.encode(u)
+      case a: BsonArray => ArraySchemaEncoder.encode(a)
+      case b: BsonBinary => BinarySchemaEncoder.encode(b)
+      case b: BsonBoolean => BooleanSchemaEncoder.encode(b)
+      case d: BsonDateTime => DateTimeSchemaEncoder.encode(d)
+      case d: BsonDbPointer => DbPointerSchemaEncoder.encode(d)
+      case d: BsonDocument => BsonDocumentSchemaEncoder.encode(d)
+      case j: BsonJavaScript => JavaScriptSchemaEncoder.encode(j)
+      case j: BsonJavaScriptWithScope => ScopedJavaScriptSchemaEncoder.encode(j)
+      case m: BsonMaxKey => MaxKeySchemaEncoder.encode(m)
+      case m: BsonMinKey => MinKeySchemaEncoder.encode(m)
+      case n: BsonNull => NullSchemaEncoder.encode(n)
+      case n: BsonNumber => NumberSchemaEncoder.encode(n)
+      case i: BsonObjectId => IdSchemaEncoder.encode(i)
+      case r: BsonRegularExpression => RegExSchemaEncoder.encode(r)
+      case s: BsonString => StringSchemaEncoder.encode(s)
+      case s: BsonSymbol => SymbolSchemaEncoder.encode(s)
+      case t: BsonTimestamp => TimestampSchemaEncoder.encode(t)
+      case u: BsonUndefined => UndefinedSchemaEncoder.encode(u)
     }
   }
 }
