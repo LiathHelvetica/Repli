@@ -1,5 +1,6 @@
 package lthv.sql.model.mapper
 
+import com.typesafe.config.Config
 import lthv.sql.model.SqlBinaryType
 import lthv.sql.model.SqlBooleanType
 import lthv.sql.model.SqlBytesDefinedFloatPrecision
@@ -13,6 +14,7 @@ import lthv.sql.model.SqlTextType
 import lthv.sql.model.SqlType
 import lthv.sql.model.SqlVarbinaryType
 import lthv.sql.model.SqlVarcharType
+import lthv.utils.ConfigHelpers.getIntPropertyWithFallback
 import lthv.utils.Converters.SqlRawString
 import lthv.utils.exception.SqlTypeNotSupportedException
 import scalikejdbc.interpolation.SQLSyntax
@@ -25,7 +27,7 @@ object PostgreSqlTypeSyntaxMapper extends SqlTypeSyntaxMapper {
 
   val mapperName: String = this.getClass.getSimpleName
 
-  def typeToSyntax(t: SqlType): Try[SQLSyntax] = {
+  def typeToSyntax(t: SqlType)(implicit conf: Config): Try[SQLSyntax] = {
 
     Success(t).map {
       case SqlTextType => sqls"text"
@@ -35,23 +37,26 @@ object PostgreSqlTypeSyntaxMapper extends SqlTypeSyntaxMapper {
       case SqlBooleanType => sqls"boolean"
       case SqlDateTimeType => sqls"timestamp"
       case SqlIntType(SqlBytesDefinedIntPrecision(n)) => n match {
-        case n if n <= 2 => sqls"smallint"
-        case n if n <= 4 => sqls"integer"
-        case n if n <= 8 => sqls"bigint"
+        case n if n <= getIntPropertyWithFallback("postgre.smallint.digit.precision") => sqls"smallint"
+        case n if n <= getIntPropertyWithFallback("postgre.integer.digit.precision") => sqls"integer"
+        case n if n <= getIntPropertyWithFallback("postgre.bigint.digit.precision") => sqls"bigint"
         case n => throw SqlTypeNotSupportedException(s"Mapper $mapperName does not support int types with $n bytes precision")
       }
       case SqlIntType(SqlDigitDefinedIntPrecision(_)) => {
         throw SqlTypeNotSupportedException(s"Mapper $mapperName does not support int types with digit-defined precision")
       }
       case SqlFloatType(SqlBytesDefinedFloatPrecision(n)) => n match {
-        case n if n <= 4 => sqls"real"
-        case n if n <= 8 => sqls"double precision"
+        case n if n <= getIntPropertyWithFallback("postgre.real.bytes.precision") => sqls"real"
+        case n if n <= getIntPropertyWithFallback("postgre.double.bytes.precision") => sqls"double precision"
         case n => throw SqlTypeNotSupportedException(s"Mapper $mapperName does not support float types with $n bytes precision")
       }
       case SqlFloatType(SqlDigitDefinedFloatPrecision(b, a)) => (b, a) match {
-        case (b, a) if b + a <= 6 => sqls"real"
-        case (b, a) if b + a <= 15 => sqls"double precision"
-        case (b, a) if b <= 131072 && a <= 16383 => sqls"numeric"
+        case (b, a) if b + a <= getIntPropertyWithFallback("postgre.real.digit.precision") => sqls"real"
+        case (b, a) if b + a <= getIntPropertyWithFallback("postgre.double.digit.precision") => sqls"double precision"
+        case (b, a) if
+          b <= getIntPropertyWithFallback("postgre.numeric.digit.precision.beforeSeparator") &&
+          a <= getIntPropertyWithFallback("postgre.numeric.digit.precision.afterSeparator")
+        => sqls"numeric"
         case (b, a) => throw SqlTypeNotSupportedException(s"Mapper $mapperName does not support float types with $b digits before and $a digits after separator")
       }
       case _ => throw SqlTypeNotSupportedException(t, mapperName)

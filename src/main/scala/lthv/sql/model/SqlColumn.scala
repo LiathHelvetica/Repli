@@ -1,5 +1,6 @@
 package lthv.sql.model
 
+import com.typesafe.config.Config
 import lthv.sql.model.mapper.SqlTypeSyntaxMapper
 import lthv.utils.Converters.SqlRawString
 import scalikejdbc.SQLSyntax
@@ -9,7 +10,7 @@ import scala.util.Try
 
 case class SqlColumn(name: String, sqlType: SqlType) {
 
-  def toSql(implicit typeMapper: SqlTypeSyntaxMapper): Try[SQLSyntax] = {
+  def toSql(implicit typeMapper: SqlTypeSyntaxMapper, conf: Config): Try[SQLSyntax] = {
 
     typeMapper.typeToSyntax(sqlType).map(typeSyntax =>
       sqls"${name.rawSql} $typeSyntax"

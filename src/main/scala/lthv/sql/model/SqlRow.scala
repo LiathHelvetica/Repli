@@ -1,5 +1,6 @@
 package lthv.sql.model
 
+import lthv.sql.model.value.SqlValue
 import lthv.utils.Converters.OptionalSqlValue
 import scalikejdbc.interpolation.SQLSyntax
 import scalikejdbc.interpolation.SQLSyntax.csv

@@ -11,6 +11,7 @@ import scalikejdbc.scalikejdbcSQLInterpolationImplicitDef
 
 import scala.util.Try
 import cats.implicits._
+import com.typesafe.config.Config
 import lthv.sql.model.ForeignKeyConstraint
 import lthv.sql.model.PrimaryKeyConstraint
 import lthv.sql.model.SqlConstraint
@@ -31,7 +32,7 @@ object SqlActionProvider {
     })
   }
 
-  def getCreateTableCommand(table: SqlTable)(implicit typeMapper: SqlTypeSyntaxMapper): Try[SQL[Nothing, NoExtractor]] = {
+  def getCreateTableCommand(table: SqlTable)(implicit typeMapper: SqlTypeSyntaxMapper, conf: Config): Try[SQL[Nothing, NoExtractor]] = {
     val columnSyntaxSeq = Seq(table.idColumn.toSql) ++ table.parentIdColumn.map(c => c.toSql) ++ table.columns.map(col => col.toSql)
     columnSyntaxSeq.sequence.map(columns =>
       sql"""

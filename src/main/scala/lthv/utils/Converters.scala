@@ -1,16 +1,21 @@
 package lthv.utils
 
-import lthv.sql.model.SqlNull
-import lthv.sql.model.SqlValue
+import lthv.sql.model.value.SqlNull
+import lthv.sql.model.value.SqlValue
 import org.bson.internal.Base64
 import scalikejdbc.SQLSyntax
 
 import scala.language.implicitConversions
+import scala.util.Failure
+import scala.util.Success
+import scala.util.Try
 
 object Converters {
 
-  implicit def toBase64(bytes: Array[Byte]): String = {
-    Base64.encode(bytes)
+  implicit class Bytes(val underlying: Array[Byte]) extends AnyVal {
+    def toBase64: String = {
+      Base64.encode(underlying)
+    }
   }
 
   implicit class OptionalSqlValue(val underlying: Option[SqlValue]) extends AnyVal {
@@ -26,4 +31,13 @@ object Converters {
       SQLSyntax.createUnsafely(underlying)
     }
   }
+
+  implicit class OptionTryConvertible[T](val o: Option[T]) extends AnyVal {
+
+    def toTry(otherwise: Throwable): Try[T] = o match {
+      case Some(t) => Success(t)
+      case None => Failure(otherwise)
+    }
+  }
 }
+

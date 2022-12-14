@@ -5,6 +5,7 @@ import lthv.utils.ConfigHelpers.getStringPropertyWithFallback
 import lthv.utils.StaticConfig.mongoIdKey
 import lthv.utils.StaticConfig.nullString
 import org.bson.BsonDbPointer
+import org.joda.time.format.DateTimeFormat
 import org.mongodb.scala.bson.BsonBinary
 import org.mongodb.scala.bson.BsonBoolean
 import org.mongodb.scala.bson.BsonDateTime
@@ -26,7 +27,7 @@ import play.api.libs.json.JsString
 
 object MongoExportIdEncoder extends ExportIdEncoder[BsonDocument] {
 
-  def getIdFrom(bson: BsonDocument)(implicit conf: Config): ExportId = {
+  def encodeId(bson: BsonDocument)(implicit conf: Config): ExportId = {
 
     val idValue = bson.get(mongoIdKey)
     val idTag = idValue.getBsonType.name
@@ -36,7 +37,10 @@ object MongoExportIdEncoder extends ExportIdEncoder[BsonDocument] {
       idValue match {
         case b: BsonBinary => b.getData
         case b: BsonBoolean => b.getValue.toString.getBytes(charset)
-        case d: BsonDateTime => d.toString.getBytes(charset)
+        case d: BsonDateTime => {
+          val formatter = DateTimeFormat.forPattern(getStringPropertyWithFallback("repli.schema.dateTimeFormat"))
+          formatter.print(d.getValue).getBytes(charset)
+        }
         case d: BsonDbPointer => d.getId.toString.getBytes(charset)
         case d: BsonDocument => d.toString.getBytes(charset)
         case j: BsonJavaScript => j.getCode.getBytes(charset)
@@ -54,6 +58,7 @@ object MongoExportIdEncoder extends ExportIdEncoder[BsonDocument] {
         case s: BsonSymbol => s.getSymbol.getBytes(charset)
         case t: BsonTimestamp => t.getValue.toString.getBytes(charset)
         case _: BsonUndefined => nullString.getBytes(charset)
+        // TODO: unsafe
         case _ => sys.error(s"Id of type $idTag is not supported")
       },
       idTag

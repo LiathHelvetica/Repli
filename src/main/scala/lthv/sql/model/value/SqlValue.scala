@@ -1,16 +1,29 @@
-package lthv.sql.model
+package lthv.sql.model.value
 
+import com.typesafe.config.Config
+import lthv.sql.model.SqlBinaryType
+import lthv.sql.model.SqlBooleanType
+import lthv.sql.model.SqlDateTimeType
+import lthv.sql.model.SqlFloatPrecision
+import lthv.sql.model.SqlFloatType
+import lthv.sql.model.SqlIntPrecision
+import lthv.sql.model.SqlIntType
+import lthv.sql.model.SqlNullType
+import lthv.sql.model.SqlTextType
+import lthv.sql.model.SqlType
+import lthv.sql.model.SqlVarbinaryType
+import lthv.sql.model.SqlVarcharType
 import org.joda.time.DateTime
 import scalikejdbc.ParameterBinder
 import scalikejdbc.ParameterBinderFactory
-import scalikejdbc.ParameterBinderFactory.stringParameterBinderFactory
-import scalikejdbc.ParameterBinderFactory.bytesParameterBinderFactory
+import scalikejdbc.ParameterBinderFactory.bigDecimalParameterBinderFactory
+import scalikejdbc.ParameterBinderFactory.bigIntParameterBinderFactory
 import scalikejdbc.ParameterBinderFactory.booleanParameterBinderFactory
-import scalikejdbc.ParameterBinderFactory.longParameterBinderFactory
-import scalikejdbc.ParameterBinderFactory.doubleParameterBinderFactory
+import scalikejdbc.ParameterBinderFactory.bytesParameterBinderFactory
 import scalikejdbc.ParameterBinderFactory.nullParameterBinderFactory
-import scalikejdbc.jodatime.JodaParameterBinderFactory.jodaDateTimeParameterBinderFactory
+import scalikejdbc.ParameterBinderFactory.stringParameterBinderFactory
 import scalikejdbc.ParameterBinderWithValue
+import scalikejdbc.jodatime.JodaParameterBinderFactory.jodaDateTimeParameterBinderFactory
 
 import java.io.ByteArrayInputStream
 import java.sql.PreparedStatement
@@ -52,15 +65,12 @@ case class SqlText(
 
 case class SqlVarchar(
   underlying: String,
-  n: Int,
   parameterBinderFactory: ParameterBinderFactory[String] = stringParameterBinderFactory
 ) extends SqlValue {
 
   type T = String
 
-  assert(n > underlying.length, "Varchar length smaller than its data")
-
-  override val sqlType: SqlType = SqlVarcharType(n)
+  override val sqlType: SqlType = SqlVarcharType(underlying.length)
 }
 
 case class SqlBinary(
@@ -83,15 +93,12 @@ case class SqlBinary(
 
 case class SqlVarbinary(
   underlying: Array[Byte],
-  n: Int,
   parameterBinderFactory: ParameterBinderFactory[Array[Byte]] = bytesParameterBinderFactory
 ) extends SqlValue {
 
   type T = Array[Byte]
 
-  assert(n > underlying.length, "Varbinary length smaller than its data")
-
-  override val sqlType: SqlType = SqlVarbinaryType(n)
+  override val sqlType: SqlType = SqlVarbinaryType(underlying.length)
 }
 
 case class SqlBoolean(
@@ -112,27 +119,26 @@ case class SqlDateTime(
   type T = DateTime
 }
 
-// TODO: classes for bigger/smaller ints/floats
+// TODO: classes for bigger/smaller ints/floats (client side, db side is already done)
 
 case class SqlInt(
-  underlying: Long,
+  underlying: BigInt,
   precision: SqlIntPrecision,
-  parameterBinderFactory: ParameterBinderFactory[Long] = longParameterBinderFactory
+  parameterBinderFactory: ParameterBinderFactory[BigInt] = bigIntParameterBinderFactory
 ) extends SqlValue {
 
-  type T = Long
+  type T = BigInt
 
   override val sqlType: SqlType = SqlIntType(precision)
 }
 
 case class SqlFloat(
-  underlying: Double,
+  underlying: BigDecimal,
   precision: SqlFloatPrecision,
-  parameterBinderFactory: ParameterBinderFactory[Double] = doubleParameterBinderFactory
+  parameterBinderFactory: ParameterBinderFactory[BigDecimal] = bigDecimalParameterBinderFactory
 ) extends SqlValue {
 
-  type T = Double
+  type T = BigDecimal
 
   override val sqlType: SqlType = SqlFloatType(precision)
 }
-

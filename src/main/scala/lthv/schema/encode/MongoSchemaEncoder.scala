@@ -2,7 +2,7 @@ package lthv.schema.encode
 
 import com.typesafe.config.Config
 import lthv.utils.ConfigHelpers.getStringPropertyWithFallback
-import lthv.utils.Converters.toBase64
+import lthv.utils.Converters.Bytes
 import lthv.utils.StaticConfig.mongoIdKey
 import org.bson.BsonDbPointer
 import org.bson.BsonType
@@ -50,7 +50,7 @@ object BinarySchemaEncoder extends RepliSchemaEncoder[BsonBinary] {
 
   def encode(b: BsonBinary)(implicit conf: Config): JsValue = {
     toTaggedSchema(
-      JsString(b.getData),
+      JsString(b.getData.toBase64),
       JsObject(Seq(
         getStringPropertyWithFallback("repli.schema.subtypeKey") -> JsNumber(b.getType.toInt)
       ))
