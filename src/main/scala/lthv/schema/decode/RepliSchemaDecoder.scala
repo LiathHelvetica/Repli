@@ -3,9 +3,8 @@ package lthv.schema.decode
 import com.typesafe.config.Config
 import org.apache.kafka.clients.consumer.ConsumerRecord
 
-trait RepliSchemaDecoder[ID, T] {
+import scala.util.Try
 
-  val exportIdDecoder: ExportIdDecoder[ID]
-
-  def decode(message: ConsumerRecord[Array[Byte], Array[Byte]])(implicit conf: Config): T
+trait RepliSchemaDecoder[T] {
+  def decode(message: ConsumerRecord[Array[Byte], Array[Byte]])(implicit conf: Config): Try[T]
 }

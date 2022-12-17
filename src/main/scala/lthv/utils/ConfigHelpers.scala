@@ -8,11 +8,18 @@ import scala.jdk.CollectionConverters._
 import scala.util.Failure
 import scala.util.Try
 import cats.implicits._
+import lthv.enums.EnumIdGenerationStrategy
 import lthv.enums.EnumKafkaTopicStrategy
+import lthv.enums.EnumSqlTableNamingStrategy
 import lthv.kafka.FromCollectionName
 import lthv.kafka.FromDbAndCollectionName
 import lthv.kafka.KafkaTopicStrategy
+import lthv.sql.model.FullPathStrategy
+import lthv.sql.model.LastNameStrategy
+import lthv.sql.model.SqlTableNamingStrategy
 import lthv.utils.exception.EnumPropertyException
+import lthv.utils.id.IdGenerationStrategy
+import lthv.utils.id.RandomIdStrategy
 
 import scala.util.Success
 
@@ -79,6 +86,31 @@ object ConfigHelpers {
         case EnumKafkaTopicStrategy.FromDbAndCollectionName => FromDbAndCollectionName
       })
       case Failure(_) => Failure(EnumPropertyException(path, e, EnumKafkaTopicStrategy.values.map(v => v.toString)))
+    }
+  }
+
+  def getSqlTableNamingStrategyWithFallback(path: String)(implicit conf: Config): Try[SqlTableNamingStrategy] = {
+    val e = getStringPropertyWithFallback(path)
+    Try {
+      EnumSqlTableNamingStrategy.withName(e)
+    } match {
+      case Success(v) => Success(v match {
+        case EnumSqlTableNamingStrategy.FullPathStrategy => FullPathStrategy
+        case EnumSqlTableNamingStrategy.LastNameStrategy => LastNameStrategy
+      })
+      case Failure(_) => Failure(EnumPropertyException(path, e, EnumSqlTableNamingStrategy.values.map(v => v.toString)))
+    }
+  }
+
+  def getIdGenerationStrategyWithFallback(path: String)(implicit conf: Config): Try[IdGenerationStrategy] = {
+    val e = getStringPropertyWithFallback(path)
+    Try {
+      EnumIdGenerationStrategy.withName(e)
+    } match {
+      case Success(v) => Success(v match {
+        case EnumIdGenerationStrategy.RandomIdStrategy => RandomIdStrategy(conf)
+      })
+      case Failure(_) => Failure(EnumPropertyException(path, e, EnumIdGenerationStrategy.values.map(v => v.toString)))
     }
   }
 

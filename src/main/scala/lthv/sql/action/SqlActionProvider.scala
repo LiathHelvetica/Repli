@@ -27,16 +27,19 @@ object SqlActionProvider {
     values.headOption.map(_ => {
       val parsedValues = values.map(row => row.toInsertValue(table))
       sql"""
-        insert into ${table.name.rawSql} (${table.columnNamesAsSyntax}) values ${csv(parsedValues: _*)}
+        insert into ${table.name.toTableName.rawSql} (${table.columnNamesAsSyntax}) values ${csv(parsedValues: _*)}
       """
     })
   }
 
   def getCreateTableCommand(table: SqlTable)(implicit typeMapper: SqlTypeSyntaxMapper, conf: Config): Try[SQL[Nothing, NoExtractor]] = {
-    val columnSyntaxSeq = Seq(table.idColumn.toSql) ++ table.parentIdColumn.map(c => c.toSql) ++ table.columns.map(col => col.toSql)
+    val columnSyntaxSeq = Seq(table.idColumn.toSql) ++
+      table.parentIdColumn.map(c => c.toSql) ++
+      table.rootIdColumn.map(c => c.toSql) ++
+      table.columns.map(col => col.toSql)
     columnSyntaxSeq.sequence.map(columns =>
       sql"""
-        create table ${table.name.rawSql} (${csv(columns: _*)})
+        create table ${table.name.toTableName.rawSql} (${csv(columns: _*)})
       """)
   }
 
@@ -50,10 +53,10 @@ object SqlActionProvider {
 
   private def getCreatePrivateKeyCommand(table: SqlTable, constraint: PrimaryKeyConstraint): SQL[Nothing, NoExtractor] = {
     val columns = constraint.columns.toSeq.map(c => c.rawSql)
-    sql"alter table ${table.name.rawSql} add constraint ${constraint.name.rawSql} primary key (${csv(columns: _*)})"
+    sql"alter table ${table.name.toTableName.rawSql} add constraint ${constraint.name.rawSql} primary key (${csv(columns: _*)})"
   }
 
   private def getCreateForeignKeyCommand(table: SqlTable, constraint: ForeignKeyConstraint): SQL[Nothing, NoExtractor] = {
-    sql"alter table ${table.name.rawSql} add constraint ${constraint.name.rawSql} foreign key (${constraint.originColumn.rawSql}) references ${constraint.referencedTable.rawSql}(${constraint.referencedColumn.rawSql})"
+    sql"alter table ${table.name.toTableName.rawSql} add constraint ${constraint.name.rawSql} foreign key (${constraint.originColumn.rawSql}) references ${constraint.referencedTable.rawSql}(${constraint.referencedColumn.rawSql})"
   }
 }
