@@ -11,7 +11,10 @@ object PostgreSqlValueCreator extends SqlValueCreator {
   def createSqlNumber(bytes: Array[Byte])(implicit conf: Config): SqlValue = {
 
     val charset = getStringPropertyWithFallback("repli.schema.exportIdCharset")
-    val v = BigDecimal(new String(bytes, charset))
+    createSqlNumber(BigDecimal(new String(bytes, charset)))
+  }
+
+  def createSqlNumber(v: BigDecimal)(implicit conf: Config): SqlValue = {
     v.toBigIntExact match {
       case Some(i) => SqlInt(i, SqlBytesDefinedIntPrecision(i.toByteArray.length))
       case None => toSqlFloat(v)

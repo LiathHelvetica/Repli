@@ -27,6 +27,7 @@ object SqlRow {
     new SqlRow(id, parentId, rootId, values)
   }
 
+  // TODO: ListMap?
   def apply(id: SqlValue, parentId: Option[SqlValue], rootId: Option[SqlValue]): SqlRow = {
     SqlRow(id, parentId, rootId, Map.empty)
   }

@@ -18,6 +18,12 @@ object Converters {
     }
   }
 
+  implicit class Base64String(val underlying: String) extends AnyVal {
+    def fromBase64: Array[Byte] = {
+      Base64.decode(underlying)
+    }
+  }
+
   implicit class OptionalSqlValue(val underlying: Option[SqlValue]) extends AnyVal {
 
     def getSqlValue: SqlValue = {
