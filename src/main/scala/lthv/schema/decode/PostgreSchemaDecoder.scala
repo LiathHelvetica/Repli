@@ -12,10 +12,12 @@ import lthv.utils.ConfigHelpers.getIdGenerationStrategyWithFallback
 import lthv.utils.ConfigHelpers.getSqlTableNamingStrategyWithFallback
 import lthv.utils.ConfigHelpers.getStringPropertyWithFallback
 import lthv.utils.Converters.Base64String
+import lthv.utils.Converters.OptionTryConvertible
 import lthv.utils.exception.ImproperJsValueException
 import lthv.utils.id.IdGenerationStrategy
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.bson.BsonType
+import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import play.api.libs.json.JsArray
 import play.api.libs.json.JsObject
@@ -27,7 +29,7 @@ import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
 
-case class PostgreSchemaDecoder(minMaxValueDecoder: MinMaxValueDecoderStrategy) extends SqlSchemaDecoder {
+object PostgreSchemaDecoder extends SqlSchemaDecoder {
 
   private val exportIdDecoder: ExportIdDecoder[SqlValue] = PostgreExportIdDecoder
   private val sqlValueCreator: SqlValueCreator = PostgreSqlValueCreator
@@ -71,10 +73,34 @@ case class PostgreSchemaDecoder(minMaxValueDecoder: MinMaxValueDecoderStrategy) 
       case obj: JsObject => {
         obj.fields.foldLeft[Try[((SqlTableName, SqlRow), Seq[(SqlTableName, SqlRow)])]](Success((
           (tableName, SqlRow(id, parentId, rootId)),
-          Seq.empty[(SqlTableName, SqlRow)]
+          Seq.empty
         )))((acc, jsField) => (acc, jsField) match {
-          case (Success(acc), (key: String, jsObj: JsObject)) => ??? // rootId.getOrElse(id)
-          case (Success(acc), (key: String, jsArr: JsArray)) => ???
+          case (Success(acc), (key: String, jsObj: JsObject)) => decode(acc, key, jsObj, id, parentId, rootId.getOrElse(id), nameStack)
+
+          case (Success(acc), (key: String, jsArr: JsArray)) => {
+
+            val typeKey = getStringPropertyWithFallback("repli.schema.typeKey")
+            val nameStackForArr = nameStack :+ key
+            val tableName = tableNamingStrategy.getTableName(nameStackForArr)
+
+            val childrenTry = jsArr.value.foldLeft[Try[Seq[(SqlTableName, SqlRow)]]](
+              Success(Seq.empty)
+            )((childrenAccTry, jsV) => {
+              (childrenAccTry, jsV) match {
+                case (Success(childrenAcc), jsObj: JsObject) if jsObj.value.contains(typeKey) => for {
+                  valueType <- jsObj.value.get(typeKey).toTry(new Exception("err")) // TODO: better exception - refactor this
+                  values <- decodeAppendedSqlValue(typeKey, key, jsObj, valueType, id, parentId, rootId.getOrElse(id), nameStackForArr)
+                } yield childrenAcc :+ (tableName, SqlRow(idGenerationStrategy.getId, Some(id), rootId, values))
+                case (Success(childrenAcc), jsObj: JsObject) => for {
+                  children <- decodeSubRows(key, jsObj, id, rootId.getOrElse(id), nameStack)
+                } yield childrenAcc ++ children
+                case (accTry@Failure(_), _) => accTry
+              }
+            })
+            val (currentRow, currentChildren) = acc
+            childrenTry.map(children => (currentRow, currentChildren ++ children))
+          }
+
           case (Success(_), (key: String, jsVal: JsValue)) => {
             Failure(ImproperJsValueException(key, jsVal, json, id, parentId, rootId, nameStack))
           }
@@ -85,12 +111,13 @@ case class PostgreSchemaDecoder(minMaxValueDecoder: MinMaxValueDecoderStrategy) 
     }
   }
 
+  // any js object - append to acc
   private def decode(
     acc: ((SqlTableName, SqlRow), Seq[(SqlTableName, SqlRow)]),
     key: String,
     jsObj: JsObject,
     currentId: SqlValue,
-    parentId: Some[SqlValue],
+    parentId: Option[SqlValue],
     rootId: SqlValue,
     nameStack: Seq[String]
   )(implicit
@@ -103,8 +130,8 @@ case class PostgreSchemaDecoder(minMaxValueDecoder: MinMaxValueDecoderStrategy) 
     val typeKey = getStringPropertyWithFallback("repli.schema.typeKey")
 
     jsObj.value.get(typeKey) match {
-      case Some(valueType: JsString) => for {
-        valuesToAppend <- decodeAppendedSqlValue(key, jsObj, valueType.value)
+      case Some(valueType: JsValue) => for {
+        valuesToAppend <- decodeAppendedSqlValue(typeKey, key, jsObj, valueType, currentId, parentId, rootId, nameStack)
       } yield {
         val (tableName, row) = parentRow
         ((tableName, row.copy(values = row.values ++ valuesToAppend)), childRows)
@@ -112,10 +139,11 @@ case class PostgreSchemaDecoder(minMaxValueDecoder: MinMaxValueDecoderStrategy) 
       case None => for { // one could insert child id to parent row but its redundant
         subRows <- decodeSubRows(key, jsObj, currentId, rootId, nameStack)
       } yield (parentRow, childRows ++ subRows)
-      case Some(jsV) => Failure(ImproperJsValueException(typeKey, jsV, jsObj, currentId, parentId, rootId, nameStack))
+      // case Some(jsV) => Failure(ImproperJsValueException(typeKey, jsV, jsObj, currentId, parentId, rootId, nameStack))
     }
   }
 
+  // any non-leaf object
   private def decodeSubRows(
     key: String,
     jsObj: JsObject,
@@ -133,6 +161,24 @@ case class PostgreSchemaDecoder(minMaxValueDecoder: MinMaxValueDecoderStrategy) 
     } yield List(subObjDecoded._1) ++ subObjDecoded._2
   }
 
+  // leaf object
+  private def decodeAppendedSqlValue(
+    typeKey: String,
+    key: String,
+    jsObj: JsObject,
+    valueType: JsValue,
+    currentId: SqlValue,
+    parentId: Option[SqlValue],
+    rootId: SqlValue,
+    nameStack: Seq[String]
+  )(implicit conf: Config): Try[Map[String, SqlValue]] = {
+    valueType match {
+      case vType: JsString => decodeAppendedSqlValue(key, jsObj, vType.value)
+      case _ => Failure(ImproperJsValueException(typeKey, valueType, jsObj, currentId, parentId, rootId, nameStack))
+    }
+  }
+
+  // leaf object
   private def decodeAppendedSqlValue(
     key: String,
     jsObj: JsObject,
@@ -168,15 +214,9 @@ case class PostgreSchemaDecoder(minMaxValueDecoder: MinMaxValueDecoderStrategy) 
         Map(key -> sqlValueCreator.createSqlText(ptr), namespaceKey -> sqlValueCreator.createSqlText(namespace))
       }
       case BsonType.JAVASCRIPT.name | BsonType.JAVASCRIPT_WITH_SCOPE.name | BsonType.OBJECT_ID.name |
-           BsonType.STRING.name | BsonType.SYMBOL.name => for {
+           BsonType.STRING.name | BsonType.SYMBOL.name | BsonType.MIN_KEY.name | BsonType.MAX_KEY.name => for {
         s <- Try { (jsObj \ valueKey).as[String] }
       } yield Map(key -> sqlValueCreator.createSqlText(s))
-      case BsonType.MIN_KEY.name => for {
-        minSql <- MinMaxAsStringDecoderStrategy.toSqlMinValue(jsObj, sqlValueCreator)
-      } yield Map(key -> minSql)
-      case BsonType.MAX_KEY.name => for {
-        maxSql <- MinMaxAsStringDecoderStrategy.toSqlMaxValue(jsObj, sqlValueCreator)
-      } yield Map(key -> maxSql)
       case BsonType.NULL.name | BsonType.UNDEFINED.name => Success(Map(key -> SqlNull))
       case BsonType.DOUBLE.name => for {
         d <- Try { (jsObj \ valueKey).as[BigDecimal] }
@@ -188,7 +228,9 @@ case class PostgreSchemaDecoder(minMaxValueDecoder: MinMaxValueDecoderStrategy) 
         val optionsKey = key + sqlSeparator + getStringPropertyWithFallback("repli.schema.sql.regEx.options.suffix")
         Map(key -> sqlValueCreator.createSqlText(s), optionsKey -> sqlValueCreator.createSqlText(opt))
       }
-      case BsonType.TIMESTAMP.name => ???
+      case BsonType.TIMESTAMP.name => for {
+        v <- Try { (jsObj \ valueKey).as[Int] }
+      } yield Map(key -> sqlValueCreator.createSqlDateTime(new DateTime(v)))
       case _ => Failure(ImproperJsValueException(key, jsObj, valueType))
     }
   }
