@@ -8,7 +8,6 @@ import lthv.sql.model.value.PostgreSqlValueCreator
 import lthv.sql.model.value.SqlNull
 import lthv.sql.model.value.SqlValue
 import lthv.sql.model.value.SqlValueCreator
-import lthv.utils.ConfigHelpers.getIdGenerationStrategyWithFallback
 import lthv.utils.ConfigHelpers.getSqlTableNamingStrategyWithFallback
 import lthv.utils.ConfigHelpers.getStringPropertyWithFallback
 import lthv.utils.Converters.Base64String
@@ -32,7 +31,7 @@ import scala.util.Try
 object PostgreSchemaDecoder extends SqlSchemaDecoder {
 
   private val exportIdDecoder: ExportIdDecoder[SqlValue] = PostgreExportIdDecoder
-  private val sqlValueCreator: SqlValueCreator = PostgreSqlValueCreator
+  private implicit val sqlValueCreator: SqlValueCreator = PostgreSqlValueCreator
 
   override def decode(
     message: ConsumerRecord[Array[Byte], Array[Byte]]
@@ -41,7 +40,6 @@ object PostgreSchemaDecoder extends SqlSchemaDecoder {
     val jsonTry = Try { Json.parse(message.value) }
     val nameStack = List(message.topic)
     val tableNamingStrategyTry = getSqlTableNamingStrategyWithFallback("repli.importer.destination.sql.tableName.strategy")
-    val idGenerationStrategyTry = getIdGenerationStrategyWithFallback("repli.importer.destination.sql.id.generation.strategy")
 
     for {
       id <- idTry
@@ -77,6 +75,7 @@ object PostgreSchemaDecoder extends SqlSchemaDecoder {
         )))((acc, jsField) => (acc, jsField) match {
           case (Success(acc), (key: String, jsObj: JsObject)) => decode(acc, key, jsObj, id, parentId, rootId.getOrElse(id), nameStack)
 
+          // TODO: to separate method
           case (Success(acc), (key: String, jsArr: JsArray)) => {
 
             val typeKey = getStringPropertyWithFallback("repli.schema.typeKey")
@@ -90,10 +89,11 @@ object PostgreSchemaDecoder extends SqlSchemaDecoder {
                 case (Success(childrenAcc), jsObj: JsObject) if jsObj.value.contains(typeKey) => for {
                   valueType <- jsObj.value.get(typeKey).toTry(new Exception("err")) // TODO: better exception - refactor this
                   values <- decodeAppendedSqlValue(typeKey, key, jsObj, valueType, id, parentId, rootId.getOrElse(id), nameStackForArr)
-                } yield childrenAcc :+ (tableName, SqlRow(idGenerationStrategy.getId, Some(id), rootId, values))
+                } yield childrenAcc :+ (tableName, SqlRow(idGenerationStrategy.getId, Some(id), rootId.orElse(Some(id)), values))
                 case (Success(childrenAcc), jsObj: JsObject) => for {
                   children <- decodeSubRows(key, jsObj, id, rootId.getOrElse(id), nameStack)
                 } yield childrenAcc ++ children
+                case (_, jsV: JsValue) => Failure(ImproperJsValueException(jsV, key, jsArr, json, id, parentId, rootId, nameStackForArr))
                 case (accTry@Failure(_), _) => accTry
               }
             })
@@ -189,46 +189,46 @@ object PostgreSchemaDecoder extends SqlSchemaDecoder {
     val subtypeKey = getStringPropertyWithFallback("repli.schema.subtypeKey")
     val sqlSeparator = getStringPropertyWithFallback("repli.importer.destination.sql.columns.separator")
 
-    valueType match {
-      case BsonType.BINARY.name => for {
+    Try { BsonType.valueOf(valueType) } match {
+      case Success(BsonType.BINARY) => for {
         v <- Try { (jsObj \ valueKey).as[String] }.map(_.fromBase64)
         t <- Try { (jsObj \ subtypeKey).as[Int] }
       } yield {
         val subtypeKey = key + sqlSeparator + getStringPropertyWithFallback("repli.schema.sql.binary.type.suffix")
         Map(key -> sqlValueCreator.createSqlBinary(v), subtypeKey -> sqlValueCreator.createSqlNumber(t))
       }
-      case BsonType.BOOLEAN.name => for {
+      case Success(BsonType.BOOLEAN) => for {
         b <- Try { (jsObj \ valueKey).as[Boolean] }
       } yield Map(key -> sqlValueCreator.createSqlBoolean(b))
-      case BsonType.DATE_TIME.name => for {
+      case Success(BsonType.DATE_TIME) => for {
         dtStr <- Try { (jsObj \ valueKey).as[String] }
         format <- Try { (jsObj \ subtypeKey).as[String] }
         formatter <- Try { DateTimeFormat.forPattern(format) }
         dt <- Try { formatter.parseDateTime(dtStr) }
       } yield Map(key -> sqlValueCreator.createSqlDateTime(dt))
-      case BsonType.DB_POINTER.name => for {
+      case Success(BsonType.DB_POINTER) => for {
         ptr <- Try { (jsObj \ valueKey).as[String] }
         namespace <- Try { (jsObj \ getStringPropertyWithFallback("repli.schema.dbPointerNamespaceKey")).as[String] }
       } yield {
         val namespaceKey = key + sqlSeparator + getStringPropertyWithFallback("repli.schema.sql.dbPointer.namespace.suffix")
         Map(key -> sqlValueCreator.createSqlText(ptr), namespaceKey -> sqlValueCreator.createSqlText(namespace))
       }
-      case BsonType.JAVASCRIPT.name | BsonType.JAVASCRIPT_WITH_SCOPE.name | BsonType.OBJECT_ID.name |
-           BsonType.STRING.name | BsonType.SYMBOL.name | BsonType.MIN_KEY.name | BsonType.MAX_KEY.name => for {
+      case Success(BsonType.JAVASCRIPT) | Success(BsonType.JAVASCRIPT_WITH_SCOPE) | Success(BsonType.OBJECT_ID) |
+           Success(BsonType.STRING) | Success(BsonType.SYMBOL) | Success(BsonType.MIN_KEY) | Success(BsonType.MAX_KEY) => for {
         s <- Try { (jsObj \ valueKey).as[String] }
       } yield Map(key -> sqlValueCreator.createSqlText(s))
-      case BsonType.NULL.name | BsonType.UNDEFINED.name => Success(Map(key -> SqlNull))
-      case BsonType.DOUBLE.name => for {
+      case Success(BsonType.NULL) | Success(BsonType.UNDEFINED) => Success(Map(key -> SqlNull))
+      case Success(BsonType.DOUBLE) => for {
         d <- Try { (jsObj \ valueKey).as[BigDecimal] }
       } yield Map(key -> sqlValueCreator.createSqlNumber(d))
-      case BsonType.REGULAR_EXPRESSION.name => for {
+      case Success(BsonType.REGULAR_EXPRESSION) => for {
         s <- Try { (jsObj \ valueKey).as[String] }
         opt <- Try { (jsObj \ getStringPropertyWithFallback("repli.schema.regExOptionsKey")).as[String] }
       } yield {
         val optionsKey = key + sqlSeparator + getStringPropertyWithFallback("repli.schema.sql.regEx.options.suffix")
         Map(key -> sqlValueCreator.createSqlText(s), optionsKey -> sqlValueCreator.createSqlText(opt))
       }
-      case BsonType.TIMESTAMP.name => for {
+      case Success(BsonType.TIMESTAMP) => for {
         v <- Try { (jsObj \ valueKey).as[Int] }
       } yield Map(key -> sqlValueCreator.createSqlDateTime(new DateTime(v)))
       case _ => Failure(ImproperJsValueException(key, jsObj, valueType))

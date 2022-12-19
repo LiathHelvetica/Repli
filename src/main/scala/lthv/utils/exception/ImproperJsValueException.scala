@@ -1,6 +1,7 @@
 package lthv.utils.exception
 
 import lthv.sql.model.value.SqlValue
+import play.api.libs.json.JsArray
 import play.api.libs.json.JsObject
 import play.api.libs.json.JsValue
 
@@ -16,6 +17,24 @@ object ImproperJsValueException {
     new ImproperJsValueException(
       s"Illegal leaf value of type $valueType\n" +
         s"Provided value $key: $jsObj"
+    )
+  }
+
+  def apply(
+    jsV: JsValue,
+    arrKey: String,
+    jsArr: JsArray,
+    json: JsValue,
+    id: SqlValue,
+    parentId: Option[SqlValue],
+    rootId: Option[SqlValue],
+    nameStack: Seq[String]
+  ): ImproperJsValueException = {
+    new ImproperJsValueException(
+      "Encountered illegal value in JsArray" +
+        s"Value: $jsV" +
+        s"Array: $arrKey: $jsArr" +
+        getMessageForDecoderError(json, id, parentId, rootId, nameStack)
     )
   }
 
