@@ -3,8 +3,6 @@ package lthv.schema.decode
 import lthv.sql.model.SqlRow
 import lthv.sql.model.SqlTableName
 
-import scala.collection.immutable.Seq
-
 case class SqlDecoderResult(results: Map[SqlTableName, Seq[SqlRow]])
 
 object SqlDecoderResult {
