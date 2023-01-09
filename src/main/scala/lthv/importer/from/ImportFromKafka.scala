@@ -1,6 +1,5 @@
 package lthv.importer.from
 
-import akka.NotUsed
 import akka.kafka.ConsumerMessage.CommittableMessage
 import akka.kafka.ConsumerSettings
 import akka.kafka.Subscription
@@ -15,10 +14,10 @@ import akka.stream.scaladsl.Source
 import com.typesafe.config.Config
 import lthv.utils.ConfigHelpers.getFiniteDurationPropertyWithFallback
 
-case class ImportFromKafka(
+class ImportFromKafka(
   kafkaSettings: ConsumerSettings[Array[Byte], Array[Byte]],
   kafkaSubscription: Subscription
-)(implicit val conf: Config) extends ImportFrom[CommittableMessage[Array[Byte], Array[Byte]], Control] {
+)(implicit conf: Config) extends ImportFrom[CommittableMessage[Array[Byte], Array[Byte]], Control] {
 
   val tickSource = Source.tick(
     getFiniteDurationPropertyWithFallback("repli.importer.source.idle.timeout.delay"),
@@ -44,4 +43,13 @@ case class ImportFromKafka(
       e.isDefined
     })
     .map(_.get)
+}
+
+object ImportFromKafka {
+  def apply(
+    kafkaSettings: ConsumerSettings[Array[Byte], Array[Byte]],
+    kafkaSubscription: Subscription
+  )(implicit conf: Config): ImportFromKafka = {
+    new ImportFromKafka(kafkaSettings, kafkaSubscription)
+  }
 }

@@ -3,7 +3,6 @@ package lthv.exporter
 import akka.Done
 import akka.kafka.ProducerSettings
 import com.typesafe.config.Config
-import lthv.exporter.to.ExportToKafka.getKafkaSettings
 import lthv.exporter.from.ExportFrom
 import lthv.exporter.from.ExportFromMongo
 import lthv.exporter.middleman.ExportMiddleman

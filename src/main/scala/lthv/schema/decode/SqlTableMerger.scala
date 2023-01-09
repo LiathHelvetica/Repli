@@ -17,7 +17,7 @@ import scala.util.Try
 import cats._
 import cats.implicits._
 
-object SqlTableMerger {
+object SqlTableMerger extends AbstractSqlTableMerger {
 
   // verified - works
   def rowsToTableMetadata(data: SqlDecoderResult)(implicit conf: Config): Try[SqlTableData] = {
