@@ -9,15 +9,15 @@ import scalikejdbc.scalikejdbcSQLInterpolationImplicitDef
 case class SqlRow(id: SqlValue, parentId: Option[SqlValue], rootId: Option[SqlValue], values: Map[String, SqlValue]) {
 
   def toInsertValue(table: SqlTable): SQLSyntax = {
-    val valuesSyntax = getRowValues(table).values.map(v => sqls"${v.toSql}").toSeq
+    val valuesSyntax = getRowValues(table).map(v => sqls"${v.toSql}")
     sqls"(${csv(valuesSyntax: _*)})"
   }
 
-  private def getRowValues(table: SqlTable): Map[String, SqlValue] = {
-    Map(table.idColumn.name -> id) ++
-      table.parentIdColumn.map(pIdCol => pIdCol.name -> parentId.getSqlValue) ++
-      table.rootIdColumn.map(rIdCol => rIdCol.name -> rootId.getSqlValue) ++
-      table.columns.names.map(col => col -> values.get(col).getSqlValue).toMap
+  private def getRowValues(table: SqlTable): Seq[SqlValue] = {
+    Seq(id) ++
+      table.parentIdColumn.map(_ => parentId.getSqlValue) ++
+      table.rootIdColumn.map(_ => rootId.getSqlValue) ++
+      table.columns.keys.map(col => values.get(col).getSqlValue)
   }
 }
 

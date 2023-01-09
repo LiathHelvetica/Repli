@@ -68,7 +68,7 @@ object PostgreSchemaDecoder extends SqlSchemaDecoder {
     val tableName = tableNamingStrategy.getTableName(nameStack)
 
     json match {
-      case obj: JsObject => {
+      case obj: JsObject => { // TODO: is folding with Try as acc a good use case for traverse? - see also TableMerging
         obj.fields.foldLeft[Try[((SqlTableName, SqlRow), Seq[(SqlTableName, SqlRow)])]](Success((
           (tableName, SqlRow(id, parentId, rootId)),
           Seq.empty

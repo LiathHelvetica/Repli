@@ -1,7 +1,7 @@
 package lthv.utils.exception
 
-import lthv.sql.model.SqlConstraint
 import lthv.sql.model.SqlTable
+import lthv.sql.model.command.SqlConstraint
 
 case class SqlConstraintNotSupportedException(msg: String) extends Exception(msg)
 

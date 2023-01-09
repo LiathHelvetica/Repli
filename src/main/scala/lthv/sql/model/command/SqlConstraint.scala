@@ -1,4 +1,4 @@
-package lthv.sql.model
+package lthv.sql.model.command
 
 trait SqlConstraint {
   val name: String

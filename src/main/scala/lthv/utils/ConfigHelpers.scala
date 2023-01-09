@@ -21,6 +21,8 @@ import lthv.utils.exception.EnumPropertyException
 import lthv.utils.id.IdGenerationStrategy
 import lthv.utils.id.RandomIdStrategy
 
+import java.util.concurrent.TimeUnit
+import scala.concurrent.duration.FiniteDuration
 import scala.util.Success
 
 object ConfigHelpers {
@@ -49,6 +51,14 @@ object ConfigHelpers {
 
   def getBooleanPropertyWithFallback(path: String)(implicit conf: Config): Boolean = {
     if (conf.hasPath(path)) conf.getBoolean(path) else defaultConf.getBoolean(path)
+  }
+
+  def getFiniteDurationProperty(path: String)(implicit conf: Config): FiniteDuration = {
+    FiniteDuration(conf.getDuration(path).toNanos, TimeUnit.NANOSECONDS)
+  }
+
+  def getFiniteDurationPropertyWithFallback(path: String)(implicit conf: Config): FiniteDuration = {
+    if (conf.hasPath(path)) getFiniteDurationProperty(path) else getFiniteDurationProperty(path)(defaultConf)
   }
 
   def getCharArrayProperty(path: String)(implicit conf: Config): Array[Char] = {

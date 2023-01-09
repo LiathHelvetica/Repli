@@ -20,10 +20,13 @@ case class SqlColumn(name: String, sqlType: SqlType) {
 
 object SqlColumn {
 
-  implicit class TableColumns(val underlying: Seq[SqlColumn]) extends AnyVal {
+  def toSql(column: (String, SqlType))(implicit typeMapper: SqlTypeSyntaxMapper, conf: Config): Try[SQLSyntax] = {
+    toSql(column._1, column._2)
+  }
 
-    def names: Seq[String] = {
-      underlying.map(c => c.name)
-    }
+  def toSql(columnName: String, columnType: SqlType)(implicit typeMapper: SqlTypeSyntaxMapper, conf: Config): Try[SQLSyntax] = {
+    typeMapper.typeToSyntax(columnType).map(typeSyntax =>
+      sqls"${columnName.rawSql} $typeSyntax"
+    )
   }
 }

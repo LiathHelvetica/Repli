@@ -12,19 +12,24 @@ import scalikejdbc.scalikejdbcSQLInterpolationImplicitDef
 import scala.util.Try
 import cats.implicits._
 import com.typesafe.config.Config
-import lthv.sql.model.ForeignKeyConstraint
-import lthv.sql.model.PrimaryKeyConstraint
-import lthv.sql.model.SqlConstraint
+import lthv.sql.model.SqlColumn.toSql
+import lthv.sql.model.command.ForeignKeyConstraint
+import lthv.sql.model.command.PrimaryKeyConstraint
+import lthv.sql.model.command.SqlAlterTable
+import lthv.sql.model.command.SqlConstraint
 import lthv.utils.exception.SqlConstraintNotSupportedException
 
 import scala.util.Success
 
-object SqlActionProvider {
+trait SqlActionProvider {
 
-  val actionProviderName: String = this.getClass.getSimpleName
+  val actionProviderName: String
+  implicit val typeMapper: SqlTypeSyntaxMapper
+  def getAlterTableCommand(alterData: SqlAlterTable)(implicit conf: Config): Try[SQL[Nothing, NoExtractor]]
 
   def getBatchInsertCommand(table: SqlTable, values: Seq[SqlRow]): Option[SQL[Nothing, NoExtractor]] = {
     values.headOption.map(_ => {
+      //TODO: does this still work after refactor?
       val parsedValues = values.map(row => row.toInsertValue(table))
       sql"""
         insert into ${table.name.toTableName.rawSql} (${table.columnNamesAsSyntax}) values ${csv(parsedValues: _*)}
@@ -32,11 +37,13 @@ object SqlActionProvider {
     })
   }
 
-  def getCreateTableCommand(table: SqlTable)(implicit typeMapper: SqlTypeSyntaxMapper, conf: Config): Try[SQL[Nothing, NoExtractor]] = {
-    val columnSyntaxSeq = Seq(table.idColumn.toSql) ++
-      table.parentIdColumn.map(c => c.toSql) ++
-      table.rootIdColumn.map(c => c.toSql) ++
-      table.columns.map(col => col.toSql)
+  def getCreateTableCommand(table: SqlTable)(implicit conf: Config): Try[SQL[Nothing, NoExtractor]] = {
+
+    val columnSyntaxSeq = Seq(toSql(table.idColumn)) ++
+      table.parentIdColumn.map(toSql(_)) ++
+      table.rootIdColumn.map(toSql(_)) ++
+      table.columns.map(toSql(_))
+
     columnSyntaxSeq.sequence.map(columns =>
       sql"""
         create table ${table.name.toTableName.rawSql} (${csv(columns: _*)})
