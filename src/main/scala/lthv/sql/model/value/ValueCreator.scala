@@ -3,7 +3,7 @@ package lthv.sql.model.value
 import com.typesafe.config.Config
 import org.joda.time.DateTime
 
-trait ValueFromBytesCreator[T] {
+trait ValueCreator[T] {
 
   def createSqlNumber(bytes: Array[Byte])(implicit conf: Config): T
 

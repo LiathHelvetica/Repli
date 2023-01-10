@@ -8,7 +8,7 @@ import lthv.utils.StaticConfig.varcharTypePropertyBit
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 
-trait SqlValueCreator extends ValueFromBytesCreator[SqlValue] {
+trait SqlValueCreator extends ValueCreator[SqlValue] {
 
   def createSqlBinary(bytes: Array[Byte])(implicit conf: Config): SqlValue = {
     val VaryingTypeData(nBytesLowerBound, nBytesUpperBound, nBytes) = (bytes, varbinaryTypePropertyBit)
