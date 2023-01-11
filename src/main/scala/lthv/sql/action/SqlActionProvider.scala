@@ -17,6 +17,7 @@ import lthv.sql.model.command.ForeignKeyConstraint
 import lthv.sql.model.command.PrimaryKeyConstraint
 import lthv.sql.model.command.SqlAlterTable
 import lthv.sql.model.command.SqlConstraint
+import lthv.utils.Converters.OptionalSqlValue
 import lthv.utils.exception.SqlConstraintNotSupportedException
 
 import scala.util.Success
@@ -29,10 +30,18 @@ trait SqlActionProvider {
 
   def getBatchInsertCommand(table: SqlTable, values: Seq[SqlRow]): Option[SQL[Nothing, NoExtractor]] = {
     values.headOption.map(_ => {
-      //TODO: does this still work after refactor?
-      val parsedValues = values.map(row => row.toInsertValue(table))
+      val tableColumns = table.columns.keys.toSeq
+      val batch = values.map(row => {
+        val parsedValues = Seq(sqls"${row.id.toSql}") ++
+          table.rootIdColumn.flatMap(_ => row.rootId.map(v => sqls"${v.toSql}")) ++
+          table.parentIdColumn.flatMap(_ => row.parentId.map(v => sqls"${v.toSql}")) ++
+          tableColumns.map(columnName => {
+            sqls"${row.values.get(columnName).getSqlValue.toSql}"
+          })
+        sqls"(${csv(parsedValues: _*)})"
+      })
       sql"""
-        insert into ${table.name.toTableName.rawSql} (${table.columnNamesAsSyntax}) values ${csv(parsedValues: _*)}
+        insert into ${table.name.toTableName.rawSql} (${table.columnNamesAsSyntax}) values ${csv(batch: _*)}
       """
     })
   }
