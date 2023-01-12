@@ -17,7 +17,7 @@ case class SqlTable(
 ) {
 
   def columnNames: Seq[String] = {
-    Seq(idColumn._1) ++ parentIdColumn.map(c => c._1) ++ rootIdColumn.map(c => c._1) ++ columns.keys
+    Seq(idColumn._1) ++ rootIdColumn.map(c => c._1) ++ parentIdColumn.map(c => c._1) ++  columns.keys
   }
 
   def columnNamesAsSyntax: SQLSyntax = {
