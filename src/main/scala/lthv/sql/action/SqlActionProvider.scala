@@ -49,8 +49,8 @@ trait SqlActionProvider {
   def getCreateTableCommand(table: SqlTable)(implicit conf: Config): Try[SQL[Nothing, NoExtractor]] = {
 
     val columnSyntaxSeq = Seq(toSql(table.idColumn)) ++
-      table.parentIdColumn.map(toSql(_)) ++
       table.rootIdColumn.map(toSql(_)) ++
+      table.parentIdColumn.map(toSql(_)) ++
       table.columns.map(toSql(_))
 
     columnSyntaxSeq.sequence.map(columns =>
